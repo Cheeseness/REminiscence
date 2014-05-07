@@ -33,7 +33,7 @@ struct PlayerInput {
 		DF_SETLIFE  = 1 << 2
 	};
 
-	uint8_t dirMask;
+	uint8 dirMask;
 	bool enter;
 	bool space;
 	bool shift;
@@ -51,12 +51,12 @@ struct PlayerInput {
 
 	bool mirrorMode;
 
-	uint8_t dbgMask;
+	uint8 dbgMask;
 	bool quit;
 };
 
 struct SystemStub {
-	typedef void (*AudioCallback)(void *param, int8_t *stream, int len);
+	typedef void (*AudioCallback)(void *param, uint8 *stream, int len);
 
 	PlayerInput _pi;
 
@@ -65,21 +65,21 @@ struct SystemStub {
 	virtual void init(const char *title, int w, int h) = 0;
 	virtual void destroy() = 0;
 
-	virtual void setPalette(const uint8_t *pal, int n) = 0;
+	virtual void setPalette(const uint8 *pal, int n) = 0;
 	virtual void setPaletteEntry(int i, const Color *c) = 0;
 	virtual void getPaletteEntry(int i, Color *c) = 0;
 	virtual void setOverscanColor(int i) = 0;
-	virtual void copyRect(int x, int y, int w, int h, const uint8_t *buf, int pitch) = 0;
+	virtual void copyRect(int x, int y, int w, int h, const uint8 *buf, int pitch) = 0;
 	virtual void fadeScreen() = 0;
 	virtual void updateScreen(int shakeOffset) = 0;
 
 	virtual void processEvents() = 0;
 	virtual void sleep(int duration) = 0;
-	virtual uint32_t getTimeStamp() = 0;
+	virtual uint32 getTimeStamp() = 0;
 
 	virtual void startAudio(AudioCallback callback, void *param) = 0;
 	virtual void stopAudio() = 0;
-	virtual uint32_t getOutputSampleRate() = 0;
+	virtual uint32 getOutputSampleRate() = 0;
 	virtual void lockAudio() = 0;
 	virtual void unlockAudio() = 0;
 };

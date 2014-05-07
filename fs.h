@@ -28,7 +28,7 @@ struct FileSystem {
 
 	FileSystem_impl *_impl;
 
-	char *findPath(const char *filename);
+	const char *findPath(const char *filename);
 };
 
 #endif // FS_H__

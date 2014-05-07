@@ -55,12 +55,10 @@ struct LocaleData {
 	static const char *_textsTableEN[];
 	static const char *_textsTableDE[];
 	static const char *_textsTableSP[];
-	static const char *_textsTableIT[];
-	static const uint8_t _stringsTableFR[];
-	static const uint8_t _stringsTableEN[];
-	static const uint8_t _stringsTableDE[];
-	static const uint8_t _stringsTableSP[];
-	static const uint8_t _stringsTableIT[];
+	static const uint8 _stringsTableFR[];
+	static const uint8 _stringsTableEN[];
+	static const uint8 _stringsTableDE[];
+	static const uint8 _stringsTableSP[];
 };
 
 struct Resource {
@@ -96,51 +94,51 @@ struct Resource {
 		OT_SPM
 	};
 
-	static const uint16_t _voicesOffsetsTable[];
-	static const uint32_t _spmOffsetsTable[];
+	static const uint16 _voicesOffsetsTable[];
+	static const uint32 _spmOffsetsTable[];
 
 	FileSystem *_fs;
 	ResourceType _type;
 	Language _lang;
 	bool _hasSeqData;
 	char _entryName[32];
-	uint8_t *_fnt;
-	uint8_t *_mbk;
-	uint8_t *_icn;
+	uint8 *_fnt;
+	uint8 *_mbk;
+	uint8 *_icn;
 	int _icnLen;
-	uint8_t *_tab;
-	uint8_t *_spc; // BE
-	uint16_t _numSpc;
-	uint8_t _rp[0x4A];
-	uint8_t *_pal; // BE
-	uint8_t *_ani;
-	uint8_t *_tbn;
-	int8_t _ctData[0x1D00];
-	uint8_t *_spr1;
-	uint8_t *_spr_off[1287]; // 0-0x22F + 0x28E-0x2E9 ... conrad, 0x22F-0x28D : junkie
-	uint8_t _sprm[0x8411]; // MERCENAI.SPR size
-	uint16_t _pgeNum;
+	uint8 *_tab;
+	uint8 *_spc; // BE
+	uint16 _numSpc;
+	uint8 _rp[0x4A];
+	uint8 *_pal; // BE
+	uint8 *_ani;
+	uint8 *_tbn;
+	int8 _ctData[0x1D00];
+	uint8 *_spr1;
+	uint8 *_spr_off[1287]; // 0-0x22F + 0x28E-0x2E9 ... conrad, 0x22F-0x28D : junkie
+	uint8 _sprm[0x8411]; // MERCENAI.SPR size
+	uint16 _pgeNum;
 	InitPGE _pgeInit[256];
-	uint8_t *_map;
-	uint8_t *_lev;
+	uint8 *_map;
+	uint8 *_lev;
 	int _levNum;
-	uint8_t *_sgd;
-	uint16_t _numObjectNodes;
+	uint8 *_sgd;
+	uint16 _numObjectNodes;
 	ObjectNode *_objectNodesMap[255];
-	uint8_t *_memBuf;
+	uint8 *_memBuf;
 	SoundFx *_sfxList;
-	uint8_t _numSfx;
-	uint8_t *_cmd;
-	uint8_t *_pol;
-	uint8_t *_cine_off;
-	uint8_t *_cine_txt;
+	uint8 _numSfx;
+	uint8 *_cmd;
+	uint8 *_pol;
+	uint8 *_cine_off;
+	uint8 *_cine_txt;
 	char **_extTextsTable;
 	const char **_textsTable;
-	uint8_t *_extStringsTable;
-	const uint8_t *_stringsTable;
-	uint8_t *_bankData;
-	uint8_t *_bankDataHead;
-	uint8_t *_bankDataTail;
+	uint8 *_extStringsTable;
+	const uint8 *_stringsTable;
+	uint8 *_bankData;
+	uint8 *_bankDataHead;
+	uint8 *_bankDataTail;
 	BankSlot _bankBuffers[50];
 	int _bankBuffersCount;
 
@@ -149,9 +147,9 @@ struct Resource {
 
 	void clearLevelRes();
 	void load_FIB(const char *fileName);
-	void load_MAP_menu(const char *fileName, uint8_t *dstPtr);
-	void load_PAL_menu(const char *fileName, uint8_t *dstPtr);
-	void load_SPR_OFF(const char *fileName, uint8_t *sprData);
+	void load_MAP_menu(const char *fileName, uint8 *dstPtr);
+	void load_PAL_menu(const char *fileName, uint8 *dstPtr);
+	void load_SPR_OFF(const char *fileName, uint8 *sprData);
 	void load_CINE();
 	void load_TEXT();
 	void free_TEXT();
@@ -175,19 +173,19 @@ struct Resource {
 	void load_CMD(File *pf);
 	void load_POL(File *pf);
 	void load_CMP(File *pf);
-	void load_VCE(int num, int segment, uint8_t **buf, uint32_t *bufSize);
+	void load_VCE(int num, int segment, uint8 **buf, uint32 *bufSize);
 	void load_SPL(File *pf);
 	void load_LEV(File *pf);
 	void load_SGD(File *pf);
 	void load_SPM(File *f);
-	const uint8_t *getAniData(int num) const {
+	const uint8 *getAniData(int num) const {
 		const int offset = READ_LE_UINT16(_ani + num * 2);
 		return _ani + offset;
 	}
-	const uint8_t *getGameString(int num) {
+	const uint8 *getGameString(int num) {
 		return _stringsTable + READ_LE_UINT16(_stringsTable + num * 2);
 	}
-	const uint8_t *getCineString(int num) {
+	const uint8 *getCineString(int num) {
 		if (_cine_off) {
 			const int offset = READ_BE_UINT16(_cine_off + num * 2);
 			return _cine_txt + offset;
@@ -198,9 +196,9 @@ struct Resource {
 		return (num >= 0 && num < LocaleData::LI_NUM) ? _textsTable[num] : "";
 	}
 	void clearBankData();
-	int getBankDataSize(uint16_t num);
-	uint8_t *findBankData(uint16_t num);
-	uint8_t *loadBankData(uint16_t num);
+	int getBankDataSize(uint16 num);
+	uint8 *findBankData(uint16 num);
+	uint8 *loadBankData(uint16 num);
 };
 
 #endif // RESOURCE_H__

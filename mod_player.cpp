@@ -25,7 +25,7 @@ ModPlayer::ModPlayer(Mixer *mixer, FileSystem *fs)
 	memset(&_modInfo, 0, sizeof(_modInfo));
 }
 
-uint16_t ModPlayer::findPeriod(uint16_t period, uint8_t fineTune) const {
+uint16 ModPlayer::findPeriod(uint16 period, uint8 fineTune) const {
 	for (int p = 0; p < 36; ++p) {
 		if (_periodTable[p] == period) {
 			return fineTune * 36 + p;
@@ -59,7 +59,7 @@ void ModPlayer::load(File *f) {
 	f->read(_modInfo.patternOrderTable, NUM_PATTERNS);
 	f->readUint32BE(); // 'M.K.', Protracker, 4 channels
 
-	uint16_t n = 0;
+	uint16 n = 0;
 	for (int i = 0; i < NUM_PATTERNS; ++i) {
 		if (_modInfo.patternOrderTable[i] != 0) {
 			n = MAX(n, _modInfo.patternOrderTable[i]);
@@ -67,14 +67,14 @@ void ModPlayer::load(File *f) {
 	}
 	debug(DBG_MOD, "numPatterns=%d",n + 1);
 	n = (n + 1) * 64 * 4 * 4; // 64 lines of 4 notes per channel
-	_modInfo.patternsTable = (uint8_t *)malloc(n);
+	_modInfo.patternsTable = (uint8 *)malloc(n);
 	assert(_modInfo.patternsTable);
 	f->read(_modInfo.patternsTable, n);
 
 	for (int s = 0; s < NUM_SAMPLES; ++s) {
 		SampleInfo *si = &_modInfo.samples[s];
 		if (si->len != 0) {
-			si->data = (int8_t *)malloc(si->len);
+			si->data = (int8 *)malloc(si->len);
 			if (si->data) {
 				f->read(si->data, si->len);
 			}
@@ -92,11 +92,11 @@ void ModPlayer::unload() {
 	}
 }
 
-void ModPlayer::play(uint8_t num) {
+void ModPlayer::play(uint8 num) {
 	if (!_playing && num < _modulesFilesCount) {
 		File f;
 		bool found = false;
-		for (uint8_t i = 0; i < ARRAYSIZE(_modulesFiles[num]); ++i) {
+		for (uint8 i = 0; i < ARRAYSIZE(_modulesFiles[num]); ++i) {
 			if (f.open(_modulesFiles[num][i], "rb", _fs)) {
 				found = true;
 				break;
@@ -132,11 +132,11 @@ void ModPlayer::stop() {
 	unload();
 }
 
-void ModPlayer::handleNote(int trackNum, uint32_t noteData) {
+void ModPlayer::handleNote(int trackNum, uint32 noteData) {
 	Track *tk = &_tracks[trackNum];
-	uint16_t sampleNum = ((noteData >> 24) & 0xF0) | ((noteData >> 12) & 0xF);
-	uint16_t samplePeriod = (noteData >> 16) & 0xFFF;
-	uint16_t effectData = noteData & 0xFFF;
+	uint16 sampleNum = ((noteData >> 24) & 0xF0) | ((noteData >> 12) & 0xF);
+	uint16 samplePeriod = (noteData >> 16) & 0xFFF;
+	uint16 effectData = noteData & 0xFFF;
 	debug(DBG_MOD, "ModPlayer::handleNote(%d) p=%d/%d sampleNumber=0x%X samplePeriod=0x%X effectData=0x%X tk->period=%d", trackNum, _currentPatternPos, _currentPatternOrder, sampleNum, samplePeriod, effectData, tk->period);
 	if (sampleNum != 0) {
 		tk->sample = &_modInfo.samples[sampleNum - 1];
@@ -198,15 +198,15 @@ void ModPlayer::applyPortamento(int trackNum) {
 
 void ModPlayer::handleEffect(int trackNum, bool tick) {
 	Track *tk = &_tracks[trackNum];
-	uint8_t effectNum = tk->effectData >> 8;
-	uint8_t effectXY = tk->effectData & 0xFF;
-	uint8_t effectX = effectXY >> 4;
-	uint8_t effectY = effectXY & 0xF;
+	uint8 effectNum = tk->effectData >> 8;
+	uint8 effectXY = tk->effectData & 0xFF;
+	uint8 effectX = effectXY >> 4;
+	uint8 effectY = effectXY & 0xF;
 	debug(DBG_MOD, "ModPlayer::handleEffect(%d) effectNum=0x%X effectXY=0x%X", trackNum, effectNum, effectXY);
 	switch (effectNum) {
 	case 0x0: // arpeggio
 		if (tick && effectXY != 0) {
-			uint16_t period = tk->period;
+			uint16 period = tk->period;
 			switch (_currentTick & 3) {
 			case 1:
 				period = _periodTable[tk->periodIndex + effectX];
@@ -421,10 +421,10 @@ void ModPlayer::handleTick() {
 //	}
 	if (_currentTick == 0) {
 		debug(DBG_MOD, "_currentPatternOrder=%d _currentPatternPos=%d", _currentPatternOrder, _currentPatternPos);
-		uint8_t currentPattern = _modInfo.patternOrderTable[_currentPatternOrder];
-		const uint8_t *p = _modInfo.patternsTable + (currentPattern * 64 + _currentPatternPos) * 16;
+		uint8 currentPattern = _modInfo.patternOrderTable[_currentPatternOrder];
+		const uint8 *p = _modInfo.patternsTable + (currentPattern * 64 + _currentPatternPos) * 16;
 		for (int i = 0; i < NUM_TRACKS; ++i) {
-			uint32_t noteData = READ_BE_UINT32(p);
+			uint32 noteData = READ_BE_UINT32(p);
 			handleNote(i, noteData);
 			p += 4;
 		}
@@ -456,11 +456,11 @@ void ModPlayer::handleTick() {
 	}
 }
 
-void ModPlayer::mixSamples(int8_t *buf, int samplesLen) {
+void ModPlayer::mixSamples(int8 *buf, int samplesLen) {
 	for (int i = 0; i < NUM_TRACKS; ++i) {
 		Track *tk = &_tracks[i];
 		if (tk->sample != 0 && tk->delayCounter == 0) {
-			int8_t *mixbuf = buf;
+			int8 *mixbuf = buf;
 			SampleInfo *si = tk->sample;
 			int len = si->len << FRAC_BITS;
 			int loopLen = si->repeatLen << FRAC_BITS;
@@ -495,7 +495,7 @@ void ModPlayer::mixSamples(int8_t *buf, int samplesLen) {
 	}
 }
 
-bool ModPlayer::mix(int8_t *buf, int len) {
+bool ModPlayer::mix(int8 *buf, int len) {
 	if (_playing) {
 		memset(buf, 0, len);
 		const int samplesPerTick = _mix->getSampleRate() / (50 * _songTempo / 125);
@@ -517,6 +517,6 @@ bool ModPlayer::mix(int8_t *buf, int len) {
 	return _playing;
 }
 
-bool ModPlayer::mixCallback(void *param, int8_t *buf, int len) {
+bool ModPlayer::mixCallback(void *param, int8 *buf, int len) {
 	return ((ModPlayer *)param)->mix(buf, len);
 }

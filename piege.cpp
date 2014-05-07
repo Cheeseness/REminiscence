@@ -37,7 +37,7 @@ void Game::pge_resetGroups() {
 	le->group_id = 0;
 }
 
-void Game::pge_removeFromGroup(uint8_t idx) {
+void Game::pge_removeFromGroup(uint8 idx) {
 	GroupPGE *le = _pge_groupsTable[idx];
 	if (le) {
 		_pge_groupsTable[idx] = 0;
@@ -54,9 +54,9 @@ void Game::pge_removeFromGroup(uint8_t idx) {
 	}
 }
 
-int Game::pge_isInGroup(LivePGE *pge_dst, uint16_t group_id, uint16_t counter) {
+int Game::pge_isInGroup(LivePGE *pge_dst, uint16 group_id, uint16 counter) {
 	assert(counter >= 1 && counter <= 4);
-	uint16_t c = pge_dst->init_PGE->counter_values[counter - 1];
+	uint16 c = pge_dst->init_PGE->counter_values[counter - 1];
 	GroupPGE *le = _pge_groupsTable[pge_dst->index];
 	while (le) {
 		if (le->group_id == group_id && le->index == c)
@@ -66,7 +66,7 @@ int Game::pge_isInGroup(LivePGE *pge_dst, uint16_t group_id, uint16_t counter) {
 	return 0;
 }
 
-void Game::pge_loadForCurrentLevel(uint16_t idx) {
+void Game::pge_loadForCurrentLevel(uint16 idx) {
 	debug(DBG_PGE, "Game::pge_loadForCurrentLevel() idx=%d", idx);
 
 	LivePGE *live_pge = &_pgeLive[idx];
@@ -92,7 +92,7 @@ void Game::pge_loadForCurrentLevel(uint16_t idx) {
 	live_pge->index = idx;
 	live_pge->next_PGE_in_room = 0;
 
-	uint16_t flags = 0;
+	uint16 flags = 0;
 	if (init_pge->skill <= _skillLevel) {
 		if (init_pge->room_location != 0 || ((init_pge->flags & 4) && (_currentRoom == init_pge->init_room))) {
 			flags |= 4;
@@ -132,7 +132,7 @@ void Game::pge_process(LivePGE *pge) {
 	if (le) {
 		pge_setupNextAnimFrame(pge, le);
 	}
-	const uint8_t *anim_data = _res.getAniData(pge->obj_type);
+	const uint8 *anim_data = _res.getAniData(pge->obj_type);
 	if (READ_LE_UINT16(anim_data) <= pge->anim_seq) {
 		InitPGE *init_pge = pge->init_PGE;
 		assert(init_pge->obj_node_number < _res._numObjectNodes);
@@ -143,10 +143,10 @@ void Game::pge_process(LivePGE *pge) {
 				pge_removeFromGroup(pge->index);
 				return;
 			}
-			uint16_t _ax = pge_execute(pge, init_pge, obj);
+			uint16 _ax = pge_execute(pge, init_pge, obj);
 			if (_ax != 0) {
 				anim_data = _res.getAniData(pge->obj_type);
-				uint8_t snd = anim_data[2];
+				uint8 snd = anim_data[2];
 				if (snd) {
 					pge_playAnimSound(pge, snd);
 				}
@@ -170,7 +170,7 @@ void Game::pge_setupNextAnimFrame(LivePGE *pge, GroupPGE *le) {
 	while (i < on->last_obj_number && pge->obj_type == obj->type) {
 		GroupPGE *next_le = le;
 		while (next_le) {
-			uint16_t groupId = next_le->group_id;
+			uint16 groupId = next_le->group_id;
 			if (obj->opcode2 == 0x6B) { // pge_op_isInGroupSlice
 				if (obj->opcode_arg2 == 0) {
 					if (groupId == 1 || groupId == 2) goto set_anim;
@@ -199,18 +199,18 @@ void Game::pge_setupNextAnimFrame(LivePGE *pge, GroupPGE *le) {
 	return;
 
 set_anim:
-	const uint8_t *anim_data = _res.getAniData(pge->obj_type);
-	uint8_t _dh = READ_LE_UINT16(anim_data);
-	uint8_t _dl = pge->anim_seq;
-	const uint8_t *anim_frame = anim_data + 6 + _dl * 4;
+	const uint8 *anim_data = _res.getAniData(pge->obj_type);
+	uint8 _dh = READ_LE_UINT16(anim_data);
+	uint8 _dl = pge->anim_seq;
+	const uint8 *anim_frame = anim_data + 6 + _dl * 4;
 	while (_dh > _dl) {
 		if (READ_LE_UINT16(anim_frame) != 0xFFFF) {
 			if (_pge_currentPiegeFacingDir) {
-				pge->pos_x -= (int8_t)anim_frame[2];
+				pge->pos_x -= (int8)anim_frame[2];
 			} else {
-				pge->pos_x += (int8_t)anim_frame[2];
+				pge->pos_x += (int8)anim_frame[2];
 			}
-			pge->pos_y += (int8_t)anim_frame[3];
+			pge->pos_y += (int8)anim_frame[3];
 		}
 		anim_frame += 4;
 		++_dl;
@@ -220,9 +220,9 @@ set_anim:
 	_col_currentPiegeGridPosX = (pge->pos_x + 8) >> 4;
 }
 
-void Game::pge_playAnimSound(LivePGE *pge, uint16_t arg2) {
+void Game::pge_playAnimSound(LivePGE *pge, uint16 arg2) {
 	if ((pge->flags & 4) && _pge_playAnimSound) {
-		uint8_t sfxId = (arg2 & 0xFF) - 1;
+		uint8 sfxId = (arg2 & 0xFF) - 1;
 		if (_currentRoom == pge->room_location) {
 			playSound(sfxId, 0);
 		} else {
@@ -238,20 +238,20 @@ void Game::pge_playAnimSound(LivePGE *pge, uint16_t arg2) {
 
 void Game::pge_setupAnim(LivePGE *pge) {
 	debug(DBG_PGE, "Game::pge_setupAnim() pgeNum=%d", pge - &_pgeLive[0]);
-	const uint8_t *anim_data = _res.getAniData(pge->obj_type);
+	const uint8 *anim_data = _res.getAniData(pge->obj_type);
 	if (READ_LE_UINT16(anim_data) < pge->anim_seq) {
 		pge->anim_seq = 0;
 	}
-	const uint8_t *anim_frame = anim_data + 6 + pge->anim_seq * 4;
+	const uint8 *anim_frame = anim_data + 6 + pge->anim_seq * 4;
 	if (READ_LE_UINT16(anim_frame) != 0xFFFF) {
-		uint16_t fl = READ_LE_UINT16(anim_frame);
+		uint16 fl = READ_LE_UINT16(anim_frame);
 		if (pge->flags & 1) {
 			fl ^= 0x8000;
-			pge->pos_x -= (int8_t)anim_frame[2];
+			pge->pos_x -= (int8)anim_frame[2];
 		} else {
-			pge->pos_x += (int8_t)anim_frame[2];
+			pge->pos_x += (int8)anim_frame[2];
 		}
-		pge->pos_y += (int8_t)anim_frame[3];
+		pge->pos_y += (int8)anim_frame[3];
 		pge->flags &= ~2;
 		if (fl & 0x8000) {
 			pge->flags |= 2;
@@ -361,7 +361,7 @@ void Game::pge_prepare() {
 			pge = pge->next_PGE_in_room;
 		}
 	}
-	for (uint16_t i = 0; i < _res._pgeNum; ++i) {
+	for (uint16 i = 0; i < _res._pgeNum; ++i) {
 		LivePGE *pge = _pge_liveTable2[i];
 		if (pge && _currentRoom != pge->room_location) {
 			col_preparePiegeState(pge);
@@ -370,13 +370,13 @@ void Game::pge_prepare() {
 }
 
 void Game::pge_setupDefaultAnim(LivePGE *pge) {
-	const uint8_t *anim_data = _res.getAniData(pge->obj_type);
+	const uint8 *anim_data = _res.getAniData(pge->obj_type);
 	if (pge->anim_seq < READ_LE_UINT16(anim_data)) {
 		pge->anim_seq = 0;
 	}
-	const uint8_t *anim_frame = anim_data + 6 + pge->anim_seq * 4;
+	const uint8 *anim_frame = anim_data + 6 + pge->anim_seq * 4;
 	if (READ_LE_UINT16(anim_frame) != 0xFFFF) {
-		uint16_t f = READ_LE_UINT16(anim_data);
+		uint16 f = READ_LE_UINT16(anim_data);
 		if (pge->flags & 1) {
 			f ^= 0x8000;
 		}
@@ -393,7 +393,7 @@ void Game::pge_setupDefaultAnim(LivePGE *pge) {
 	}
 }
 
-uint16_t Game::pge_processOBJ(LivePGE *pge) {
+uint16 Game::pge_processOBJ(LivePGE *pge) {
 	InitPGE *init_pge = pge->init_PGE;
 	assert(init_pge->obj_node_number < _res._numObjectNodes);
 	ObjectNode *on = _res._objectNodesMap[init_pge->obj_node_number];
@@ -413,7 +413,7 @@ uint16_t Game::pge_processOBJ(LivePGE *pge) {
 }
 
 void Game::pge_setupOtherPieges(LivePGE *pge, InitPGE *init_pge) {
-	const int8_t *room_ct_data = 0;
+	const int8 *room_ct_data = 0;
 	if (pge->pos_x <= -10) {
 		pge->pos_x += 256;
 		room_ct_data = &_res._ctData[CT_LEFT_ROOM];
@@ -428,7 +428,7 @@ void Game::pge_setupOtherPieges(LivePGE *pge, InitPGE *init_pge) {
 		room_ct_data = &_res._ctData[CT_DOWN_ROOM];
 	}
 	if (room_ct_data) {
-		int8_t room = pge->room_location;
+		int8 room = pge->room_location;
 		if (room >= 0) {
 			room = room_ct_data[room];
 			pge->room_location = room;
@@ -474,7 +474,7 @@ void Game::pge_setupOtherPieges(LivePGE *pge, InitPGE *init_pge) {
 	pge_addToCurrentRoomList(pge, _pge_currentPiegeRoom);
 }
 
-void Game::pge_addToCurrentRoomList(LivePGE *pge, uint8_t room) {
+void Game::pge_addToCurrentRoomList(LivePGE *pge, uint8 room) {
 	debug(DBG_PGE, "Game::pge_addToCurrentRoomList() pgeNum=%d room=%d", pge - &_pgeLive[0], room);
 	if (room != pge->room_location) {
 		LivePGE *cur_pge = _pge_liveTable1[room];
@@ -503,7 +503,7 @@ void Game::pge_getInput() {
 		_inp_lastKeysHit ^= 0xC; // invert left/right
 	}
 	if ((_inp_lastKeysHit & 0xC) && (_inp_lastKeysHit & 0x3)) {
-		const uint8_t mask = (_inp_lastKeysHit & 0xF0) | (_inp_lastKeysHitLeftRight & 0xF);
+		const uint8 mask = (_inp_lastKeysHit & 0xF0) | (_inp_lastKeysHitLeftRight & 0xF);
 		_pge_inpKeysMask = mask;
 		_inp_lastKeysHit = mask;
 	} else {
@@ -530,7 +530,7 @@ int Game::pge_op_isInpUp(ObjectOpcodeArgs *args) {
 }
 
 int Game::pge_op_isInpBackward(ObjectOpcodeArgs *args) {
-	uint8_t mask = 8; // right
+	uint8 mask = 8; // right
 	if (_pge_currentPiegeFacingDir) {
 		mask = 4; // left
 	}
@@ -550,7 +550,7 @@ int Game::pge_op_isInpDown(ObjectOpcodeArgs *args) {
 }
 
 int Game::pge_op_isInpForward(ObjectOpcodeArgs *args) {
-	uint8_t mask = 4;
+	uint8 mask = 4;
 	if (_pge_currentPiegeFacingDir) {
 		mask = 8;
 	}
@@ -563,7 +563,7 @@ int Game::pge_op_isInpForward(ObjectOpcodeArgs *args) {
 
 int Game::pge_op_isInpUpMod(ObjectOpcodeArgs *args) {
 	assert(args->a < 3);
-	uint8_t mask = _pge_modKeysTable[args->a] | 1;
+	uint8 mask = _pge_modKeysTable[args->a] | 1;
 	if (mask == _pge_inpKeysMask) {
 		return 0xFFFF;
 	} else {
@@ -573,7 +573,7 @@ int Game::pge_op_isInpUpMod(ObjectOpcodeArgs *args) {
 
 int Game::pge_op_isInpBackwardMod(ObjectOpcodeArgs *args) {
 	assert(args->a < 3);
-	uint8_t mask = _pge_modKeysTable[args->a];
+	uint8 mask = _pge_modKeysTable[args->a];
 	if (_pge_currentPiegeFacingDir) {
 		mask |= 4;
 	} else {
@@ -588,7 +588,7 @@ int Game::pge_op_isInpBackwardMod(ObjectOpcodeArgs *args) {
 
 int Game::pge_op_isInpDownMod(ObjectOpcodeArgs *args) {
 	assert(args->a < 3);
-	uint8_t mask = _pge_modKeysTable[args->a] | 2;
+	uint8 mask = _pge_modKeysTable[args->a] | 2;
 	if (mask == _pge_inpKeysMask) {
 		return 0xFFFF;
 	} else {
@@ -598,7 +598,7 @@ int Game::pge_op_isInpDownMod(ObjectOpcodeArgs *args) {
 
 int Game::pge_op_isInpForwardMod(ObjectOpcodeArgs *args) {
 	assert(args->a < 3);
-	uint8_t mask = _pge_modKeysTable[args->a];
+	uint8 mask = _pge_modKeysTable[args->a];
 	if (_pge_currentPiegeFacingDir) {
 		mask |= 8;
 	} else {
@@ -621,7 +621,7 @@ int Game::pge_op_isInpIdle(ObjectOpcodeArgs *args) {
 
 int Game::pge_op_isInpNoMod(ObjectOpcodeArgs *args) {
 	assert(args->a < 3);
-	uint8_t mask = _pge_modKeysTable[args->a];
+	uint8 mask = _pge_modKeysTable[args->a];
 	if (((_pge_inpKeysMask & 0xF) | mask) == _pge_inpKeysMask) {
 		return 0xFFFF;
 	} else {
@@ -666,7 +666,7 @@ int Game::pge_op_getCollision2d(ObjectOpcodeArgs *args) {
 }
 
 int Game::pge_op_doesNotCollide0u(ObjectOpcodeArgs *args) {
-	int16_t r = col_getGridData(args->pge, 0, -args->a);
+	int16 r = col_getGridData(args->pge, 0, -args->a);
 	if (r & 0xFFFF) {
 		return 0;
 	} else {
@@ -675,7 +675,7 @@ int Game::pge_op_doesNotCollide0u(ObjectOpcodeArgs *args) {
 }
 
 int Game::pge_op_doesNotCollide00(ObjectOpcodeArgs *args) {
-	int16_t r = col_getGridData(args->pge, 0, 0);
+	int16 r = col_getGridData(args->pge, 0, 0);
 	if (r & 0xFFFF) {
 		return 0;
 	} else {
@@ -684,7 +684,7 @@ int Game::pge_op_doesNotCollide00(ObjectOpcodeArgs *args) {
 }
 
 int Game::pge_op_doesNotCollide0d(ObjectOpcodeArgs *args) {
-	int16_t r = col_getGridData(args->pge, 0, args->a);
+	int16 r = col_getGridData(args->pge, 0, args->a);
 	if (r & 0xFFFF) {
 		return 0;
 	} else {
@@ -693,7 +693,7 @@ int Game::pge_op_doesNotCollide0d(ObjectOpcodeArgs *args) {
 }
 
 int Game::pge_op_doesNotCollide1u(ObjectOpcodeArgs *args) {
-	int16_t r = col_getGridData(args->pge, 1, -args->a);
+	int16 r = col_getGridData(args->pge, 1, -args->a);
 	if (r & 0xFFFF) {
 		return 0;
 	} else {
@@ -702,7 +702,7 @@ int Game::pge_op_doesNotCollide1u(ObjectOpcodeArgs *args) {
 }
 
 int Game::pge_op_doesNotCollide10(ObjectOpcodeArgs *args) {
-	int16_t r = col_getGridData(args->pge, 1, 0);
+	int16 r = col_getGridData(args->pge, 1, 0);
 	if (r & 0xFFFF) {
 		return 0;
 	} else {
@@ -711,7 +711,7 @@ int Game::pge_op_doesNotCollide10(ObjectOpcodeArgs *args) {
 }
 
 int Game::pge_op_doesNotCollide1d(ObjectOpcodeArgs *args) {
-	int16_t r = col_getGridData(args->pge, 1, args->a);
+	int16 r = col_getGridData(args->pge, 1, args->a);
 	if (r & 0xFFFF) {
 		return 0;
 	} else {
@@ -720,7 +720,7 @@ int Game::pge_op_doesNotCollide1d(ObjectOpcodeArgs *args) {
 }
 
 int Game::pge_op_doesNotCollide2u(ObjectOpcodeArgs *args) {
-	int16_t r = col_getGridData(args->pge, 2, -args->a);
+	int16 r = col_getGridData(args->pge, 2, -args->a);
 	if (r & 0xFFFF) {
 		return 0;
 	} else {
@@ -729,7 +729,7 @@ int Game::pge_op_doesNotCollide2u(ObjectOpcodeArgs *args) {
 }
 
 int Game::pge_op_doesNotCollide20(ObjectOpcodeArgs *args) {
-	int16_t r = col_getGridData(args->pge, 2, 0);
+	int16 r = col_getGridData(args->pge, 2, 0);
 	if (r & 0xFFFF) {
 		return 0;
 	} else {
@@ -738,7 +738,7 @@ int Game::pge_op_doesNotCollide20(ObjectOpcodeArgs *args) {
 }
 
 int Game::pge_op_doesNotCollide2d(ObjectOpcodeArgs *args) {
-	int16_t r = col_getGridData(args->pge, 2, args->a);
+	int16 r = col_getGridData(args->pge, 2, args->a);
 	if (r & 0xFFFF) {
 		return 0;
 	} else {
@@ -938,7 +938,7 @@ int Game::pge_op_canUseCurrentInventoryItem(ObjectOpcodeArgs *args) {
 
 // useObject related
 int Game::pge_o_unk0x34(ObjectOpcodeArgs *args) {
-	uint8_t mask = (_pge_inpKeysMask & 0xF) | _pge_modKeysTable[0];
+	uint8 mask = (_pge_inpKeysMask & 0xF) | _pge_modKeysTable[0];
 	if (mask == _pge_inpKeysMask) {
 		if (col_getGridData(args->pge, 2, -args->a) == 0) {
 			return 0xFFFF;
@@ -949,7 +949,7 @@ int Game::pge_o_unk0x34(ObjectOpcodeArgs *args) {
 
 int Game::pge_op_isInpMod(ObjectOpcodeArgs *args) {
 	assert(args->a < 3);
-	uint8_t mask = _pge_modKeysTable[args->a];
+	uint8 mask = _pge_modKeysTable[args->a];
 	if (mask == _pge_inpKeysMask) {
 		return 0xFFFF;
 	} else {
@@ -1004,7 +1004,7 @@ int Game::pge_op_decPiegeCounter(ObjectOpcodeArgs *args) {
 }
 
 int Game::pge_o_unk0x40(ObjectOpcodeArgs *args) {
-	int8_t pge_room = args->pge->room_location;
+	int8 pge_room = args->pge->room_location;
 	if (pge_room < 0 || pge_room >= 0x40) return 0;
 	int col_area;
 	if (_currentRoom == pge_room) {
@@ -1016,22 +1016,22 @@ int Game::pge_o_unk0x40(ObjectOpcodeArgs *args) {
 	} else {
 		return 0;
 	}
-	int16_t grid_pos_x = (args->pge->pos_x + 8) >> 4;
-	int16_t grid_pos_y = args->pge->pos_y / 72;
+	int16 grid_pos_x = (args->pge->pos_x + 8) >> 4;
+	int16 grid_pos_y = args->pge->pos_y / 72;
 	if (grid_pos_y >= 0 && grid_pos_y <= 2) {
 		grid_pos_y *= 16;
-		int16_t _cx = args->a;
+		int16 _cx = args->a;
 		if (_pge_currentPiegeFacingDir) {
 			_cx = -_cx;
 		}
-		int8_t _bl;
+		int8 _bl;
 		if (_cx >= 0) {
 			if (_cx > 0x10) {
 				_cx = 0x10;
 			}
-			int8_t *var2 = &_res._ctData[0x100] + pge_room * 0x70 + grid_pos_y * 2 + 0x10 + grid_pos_x;
-			uint8_t *var4 = _col_activeCollisionSlots + col_area * 0x30 + grid_pos_y + grid_pos_x;
-			int16_t var12 = grid_pos_x;
+			int8 *var2 = &_res._ctData[0x100] + pge_room * 0x70 + grid_pos_y * 2 + 0x10 + grid_pos_x;
+			uint8 *var4 = _col_activeCollisionSlots + col_area * 0x30 + grid_pos_y + grid_pos_x;
+			int16 var12 = grid_pos_x;
 			--_cx;
 			do {
 				--var12;
@@ -1066,9 +1066,9 @@ int Game::pge_o_unk0x40(ObjectOpcodeArgs *args) {
 			if (_cx > 0x10) {
 				_cx = 0x10;
 			}
-			int8_t *var2 = &_res._ctData[0x101] + pge_room * 0x70 + grid_pos_y * 2 + 0x10 + grid_pos_x;
-			uint8_t *var4 = _col_activeCollisionSlots + 1 + col_area * 0x30 + grid_pos_y + grid_pos_x;
-			int16_t var12 = grid_pos_x;
+			int8 *var2 = &_res._ctData[0x101] + pge_room * 0x70 + grid_pos_y * 2 + 0x10 + grid_pos_x;
+			uint8 *var4 = _col_activeCollisionSlots + 1 + col_area * 0x30 + grid_pos_y + grid_pos_x;
+			int16 var12 = grid_pos_x;
 			--_cx;
 			do {
 				++var12;
@@ -1107,7 +1107,7 @@ int Game::pge_o_unk0x40(ObjectOpcodeArgs *args) {
 
 int Game::pge_op_wakeUpPiege(ObjectOpcodeArgs *args) {
 	if (args->a <= 3) {
-		int16_t num = args->pge->init_PGE->counter_values[args->a];
+		int16 num = args->pge->init_PGE->counter_values[args->a];
 		if (num >= 0) {
 			LivePGE *pge = &_pgeLive[num];
 			pge->flags |= 4;
@@ -1119,7 +1119,7 @@ int Game::pge_op_wakeUpPiege(ObjectOpcodeArgs *args) {
 
 int Game::pge_op_removePiege(ObjectOpcodeArgs *args) {
 	if (args->a <= 3) {
-		int16_t num = args->pge->init_PGE->counter_values[args->a];
+		int16 num = args->pge->init_PGE->counter_values[args->a];
 		if (num >= 0) {
 			_pge_liveTable2[num] = 0;
 			_pgeLive[num].flags &= ~4;
@@ -1226,7 +1226,7 @@ int Game::pge_op_isNotInCurrentRoom(ObjectOpcodeArgs *args) {
 int Game::pge_op_scrollPosY(ObjectOpcodeArgs *args) {
 	LivePGE *pge = args->pge;
 	args->pge->pos_y += args->a;
-	uint8_t pge_num = pge->current_inventory_PGE;
+	uint8 pge_num = pge->current_inventory_PGE;
 	while (pge_num != 0xFF) {
 		pge = &_pgeLive[pge_num];
 		pge->pos_y += args->a;
@@ -1274,7 +1274,7 @@ int Game::pge_op_incLife(ObjectOpcodeArgs *args) {
 // level2, Ian
 int Game::pge_op_setPiegeDefaultAnim(ObjectOpcodeArgs *args) {
 	assert(args->a >= 0 && args->a < 4);
-	int16_t r = args->pge->init_PGE->counter_values[args->a];
+	int16 r = args->pge->init_PGE->counter_values[args->a];
 	args->pge->room_location = r;
 	if (r == 1) {
 		warning("setting _loadMap to true");
@@ -1327,11 +1327,11 @@ int Game::pge_o_unk0x5E(ObjectOpcodeArgs *args) {
 int Game::pge_o_unk0x5F(ObjectOpcodeArgs *args) {
 	LivePGE *pge = args->pge;
 
-	int8_t pge_room = pge->room_location;
+	int8 pge_room = pge->room_location;
 	if (pge_room < 0 || pge_room >= 0x40) return 0;
 
-	int16_t dx;
-	int16_t _cx = pge->init_PGE->counter_values[0];
+	int16 dx;
+	int16 _cx = pge->init_PGE->counter_values[0];
 	if (_cx <= 0) {
 		dx = 1;
 		_cx = -_cx;
@@ -1341,10 +1341,10 @@ int Game::pge_o_unk0x5F(ObjectOpcodeArgs *args) {
 	if (_pge_currentPiegeFacingDir) {
 		dx = -dx;
 	}
-	int16_t grid_pos_x = (pge->pos_x + 8) >> 4;
-	int16_t grid_pos_y = 0;
+	int16 grid_pos_x = (pge->pos_x + 8) >> 4;
+	int16 grid_pos_y = 0;
 	do {
-		int16_t _ax = col_getGridData(pge, 1, -grid_pos_y);
+		int16 _ax = col_getGridData(pge, 1, -grid_pos_y);
 		if (_ax != 0) {
 			if (!(_ax & 2) || args->a != 1) {
 				pge->room_location = pge_room;
@@ -1382,7 +1382,7 @@ int Game::pge_op_findAndCopyPiege(ObjectOpcodeArgs *args) {
 }
 
 int Game::pge_op_isInRandomRange(ObjectOpcodeArgs *args) {
-	uint16_t n = args->a;
+	uint16 n = args->a;
 	if (n != 0) {
 		if ((getRandomNumber() % n) == 0) {
 			return 1;
@@ -1405,16 +1405,16 @@ int Game::pge_o_unk0x64(ObjectOpcodeArgs *args) {
 
 int Game::pge_op_addToCredits(ObjectOpcodeArgs *args) {
 	assert(args->a >= 0 && args->a < 3);
-	uint8_t pge = args->pge->init_PGE->counter_values[args->a];
-	int16_t val = args->pge->init_PGE->counter_values[args->a + 1];
+	uint8 pge = args->pge->init_PGE->counter_values[args->a];
+	int16 val = args->pge->init_PGE->counter_values[args->a + 1];
 	_pgeLive[pge].life += val;
 	return 1;
 }
 
 int Game::pge_op_subFromCredits(ObjectOpcodeArgs *args) {
 	assert(args->a >= 0 && args->a < 3);
-	uint8_t pge = args->pge->init_PGE->counter_values[args->a];
-	int16_t val = args->pge->init_PGE->counter_values[args->a + 1];
+	uint8 pge = args->pge->init_PGE->counter_values[args->a];
+	int16 val = args->pge->init_PGE->counter_values[args->a + 1];
 	_pgeLive[pge].life -= val;
 	return 1;
 }
@@ -1439,11 +1439,11 @@ int Game::pge_op_saveState(ObjectOpcodeArgs *args) {
 // useGun related
 int Game::pge_o_unk0x6A(ObjectOpcodeArgs *args) {
 	LivePGE *_si = args->pge;
-	int8_t pge_room = _si->room_location;
+	int8 pge_room = _si->room_location;
 	if (pge_room < 0 || pge_room >= 0x40) return 0;
-	int8_t _bl;
+	int8 _bl;
 	int col_area = 0;
-	int8_t *ct_data;
+	int8 *ct_data;
 	if (_currentRoom == pge_room) {
 		col_area = 1;
 	} else if (_col_currentLeftRoom == pge_room) {
@@ -1453,11 +1453,11 @@ int Game::pge_o_unk0x6A(ObjectOpcodeArgs *args) {
 	} else {
 		return 0;
 	}
-	int16_t grid_pos_x = (_si->pos_x + 8) >> 4;
-	int16_t grid_pos_y = (_si->pos_y / 72);
+	int16 grid_pos_x = (_si->pos_x + 8) >> 4;
+	int16 grid_pos_y = (_si->pos_y / 72);
 	if (grid_pos_y >= 0 && grid_pos_y <= 2) {
 		grid_pos_y *= 16;
-		int16_t _cx = args->a;
+		int16 _cx = args->a;
 		if (_pge_currentPiegeFacingDir) {
 			_cx = -_cx;
 		}
@@ -1466,10 +1466,10 @@ int Game::pge_o_unk0x6A(ObjectOpcodeArgs *args) {
 				_cx = 0x10;
 			}
 			ct_data = &_res._ctData[0x100] + pge_room * 0x70 + grid_pos_y * 2 + 0x10 + grid_pos_x;
-			uint8_t *var4 = _col_activeCollisionSlots + col_area * 0x30 + grid_pos_y + grid_pos_x;
+			uint8 *var4 = _col_activeCollisionSlots + col_area * 0x30 + grid_pos_y + grid_pos_x;
 			++var4;
 			++ct_data;
-			int16_t varA = grid_pos_x;
+			int16 varA = grid_pos_x;
 			do {
 				--varA;
 				if (varA < 0) {
@@ -1506,8 +1506,8 @@ int Game::pge_o_unk0x6A(ObjectOpcodeArgs *args) {
 				_cx = 0x10;
 			}
 			ct_data = &_res._ctData[0x101] + pge_room * 0x70 + grid_pos_y * 2 + 0x10 + grid_pos_x;
-			uint8_t *var4 = _col_activeCollisionSlots + 1 + col_area * 0x30 + grid_pos_y + grid_pos_x;
-			int16_t varA = grid_pos_x;
+			uint8 *var4 = _col_activeCollisionSlots + 1 + col_area * 0x30 + grid_pos_y + grid_pos_x;
+			int16 varA = grid_pos_x;
 			goto loc_0_15446;
 			do {
 				++varA;
@@ -1580,7 +1580,7 @@ int Game::pge_o_unk0x6C(ObjectOpcodeArgs *args) {
 }
 
 int Game::pge_op_isCollidingObject(ObjectOpcodeArgs *args) {
-	uint8_t r = col_findCurrentCollidingObject(args->pge, 3, 0xFF, 0xFF, 0);
+	uint8 r = col_findCurrentCollidingObject(args->pge, 3, 0xFF, 0xFF, 0);
 	if (r == args->a) {
 		return 1;
 	} else {
@@ -1616,7 +1616,7 @@ int Game::pge_o_unk0x6F(ObjectOpcodeArgs *args) {
 }
 
 int Game::pge_o_unk0x70(ObjectOpcodeArgs *args) {
-	uint8_t pge_num = args->pge->current_inventory_PGE;
+	uint8 pge_num = args->pge->current_inventory_PGE;
 	while (pge_num != 0xFF) {
 		pge_updateGroup(args->pge->index, _pgeLive[pge_num].index, args->a);
 		pge_num = _pgeLive[pge_num].next_inventory_PGE;
@@ -1639,7 +1639,7 @@ int Game::pge_o_unk0x71(ObjectOpcodeArgs *args) {
 }
 
 int Game::pge_o_unk0x72(ObjectOpcodeArgs *args) {
-	int8_t *var4 = &_res._ctData[0x100] + args->pge->room_location * 0x70;
+	int8 *var4 = &_res._ctData[0x100] + args->pge->room_location * 0x70;
 	var4 += (((args->pge->pos_y / 36) & ~1) + args->a) * 16 + (args->pge->pos_x + 8) / 16;
 
 	CollisionSlot2 *_di = _col_slots2Next;
@@ -1725,7 +1725,7 @@ int Game::pge_op_isNotFacingConrad(ObjectOpcodeArgs *args) {
 					}
 				}
 			} else {
-				int16_t dx;
+				int16 dx;
 				if (_pge_currentPiegeFacingDir) {
 					dx = pge_conrad->pos_x - pge->pos_x;
 				} else {
@@ -1766,7 +1766,7 @@ int Game::pge_op_isFacingConrad(ObjectOpcodeArgs *args) {
 					}
 				}
 			} else {
-				int16_t dx;
+				int16 dx;
 				if (_pge_currentPiegeFacingDir) {
 					dx = pge->pos_x - pge_conrad->pos_x;
 				} else {
@@ -1824,8 +1824,8 @@ int Game::pge_o_unk0x7C(ObjectOpcodeArgs *args) {
 }
 
 int Game::pge_op_playSound(ObjectOpcodeArgs *args) {
-	uint8_t sfxId = args->a & 0xFF;
-	uint8_t softVol = args->a >> 8;
+	uint8 sfxId = args->a & 0xFF;
+	uint8 softVol = args->a >> 8;
 	playSound(sfxId, softVol);
 	return 0xFFFF;
 }
@@ -1838,8 +1838,8 @@ int Game::pge_o_unk0x7E(ObjectOpcodeArgs *args) {
 
 int Game::pge_o_unk0x7F(ObjectOpcodeArgs *args) {
 	LivePGE *_si = args->pge;
-	uint8_t var4 = _si->collision_slot;
-	uint8_t var2 = _si->index;
+	uint8 var4 = _si->collision_slot;
+	uint8 var2 = _si->index;
 	while (var4 != 0xFF) {
 		CollisionSlot *slot = _col_slotsTable[var4];
 		while (slot) {
@@ -1858,7 +1858,7 @@ int Game::pge_o_unk0x7F(ObjectOpcodeArgs *args) {
 }
 
 int Game::pge_op_setPiegePosX(ObjectOpcodeArgs *args) {
-	uint8_t pge_num = args->pge->unkF;
+	uint8 pge_num = args->pge->unkF;
 	if (pge_num != 0xFF) {
 		args->pge->pos_x = _pgeLive[pge_num].pos_x;
 	}
@@ -1866,9 +1866,9 @@ int Game::pge_op_setPiegePosX(ObjectOpcodeArgs *args) {
 }
 
 int Game::pge_op_setPiegePosModX(ObjectOpcodeArgs *args) {
-	uint8_t pge_num = args->pge->unkF;
+	uint8 pge_num = args->pge->unkF;
 	if (pge_num != 0xFF) {
-		int16_t dx = _pgeLive[pge_num].pos_x % 256;
+		int16 dx = _pgeLive[pge_num].pos_x % 256;
 		if (dx >= args->pge->pos_x) {
 			dx -= args->pge->pos_x;
 		}
@@ -1881,13 +1881,13 @@ int Game::pge_op_setPiegePosModX(ObjectOpcodeArgs *args) {
 int Game::pge_op_changeRoom(ObjectOpcodeArgs *args) {
 	InitPGE *init_pge_1 = args->pge->init_PGE;
 	assert(args->a >= 0 && args->a < 3);
-	int16_t _ax = init_pge_1->counter_values[args->a];
-	int16_t _bx = init_pge_1->counter_values[args->a + 1];
+	int16 _ax = init_pge_1->counter_values[args->a];
+	int16 _bx = init_pge_1->counter_values[args->a + 1];
 	LivePGE *live_pge_1 = &_pgeLive[_bx];
 	LivePGE *live_pge_2 = &_pgeLive[_ax];
-	int8_t pge_room = live_pge_1->room_location;
+	int8 pge_room = live_pge_1->room_location;
 	if (pge_room >= 0 && pge_room < 0x40) {
-		int8_t _al = live_pge_2->room_location;
+		int8 _al = live_pge_2->room_location;
 		live_pge_2->pos_x = live_pge_1->pos_x;
 		live_pge_2->pos_y = live_pge_1->pos_y;
 		live_pge_2->room_location = live_pge_1->room_location;
@@ -1926,7 +1926,7 @@ int Game::pge_op_changeRoom(ObjectOpcodeArgs *args) {
 // called for example before using gun, to check its presence
 int Game::pge_op_hasInventoryItem(ObjectOpcodeArgs *args) {
 	LivePGE *pge = &_pgeLive[0];
-	uint8_t _dl = pge->current_inventory_PGE;
+	uint8 _dl = pge->current_inventory_PGE;
 	while (_dl != 0xFF) {
 		pge = &_pgeLive[_dl];
 		if (pge->init_PGE->object_id == args->a) {
@@ -1953,9 +1953,9 @@ int Game::pge_o_unk0x86(ObjectOpcodeArgs *args) {
 
 int Game::pge_op_playSoundGroup(ObjectOpcodeArgs *args) {
 	assert(args->a < 4);
-	uint16_t c = args->pge->init_PGE->counter_values[args->a];
-	uint8_t sfxId = c & 0xFF;
-	uint8_t softVol = c >> 8;
+	uint16 c = args->pge->init_PGE->counter_values[args->a];
+	uint8 sfxId = c & 0xFF;
+	uint8 softVol = c >> 8;
 	playSound(sfxId, softVol);
 	return 0xFFFF;
 }
@@ -2024,7 +2024,7 @@ void Game::pge_reorderInventory(LivePGE *pge) {
 
 LivePGE *Game::pge_getInventoryItemBefore(LivePGE *pge, LivePGE *last_pge) {
 	LivePGE *_di = pge;
-	uint8_t n = _di->current_inventory_PGE;
+	uint8 n = _di->current_inventory_PGE;
 	while (n != 0xFF) {
 		LivePGE *_si = &_pgeLive[n];
 		if (_si == last_pge) {
@@ -2048,17 +2048,18 @@ void Game::pge_addToInventory(LivePGE *pge1, LivePGE *pge2, LivePGE *pge3) {
 	}
 }
 
-int Game::pge_updateCollisionState(LivePGE *pge, int16_t pge_dy, uint8_t var8) {
-	uint8_t pge_unk1C = pge->init_PGE->unk1C;
+int Game::pge_updateCollisionState(LivePGE *pge, int16 pge_dy, uint8 var8) {
+	uint8 pge_unk1C = pge->init_PGE->unk1C;
 	if (!(pge->room_location & 0x80) && pge->room_location < 0x40) {
-		int8_t *grid_data = &_res._ctData[0x100] + 0x70 * pge->room_location;
-		int16_t pge_pos_y = ((pge->pos_y / 36) & ~1) + pge_dy;
-		int16_t pge_pos_x = (pge->pos_x + 8) >> 4;
+		int8 *grid_data = &_res._ctData[0x100] + 0x70 * pge->room_location;
+		int16 pge_pos_y = ((pge->pos_y / 36) & ~1) + pge_dy;
+		int16 pge_pos_x = (pge->pos_x + 8) >> 4;
 
 		grid_data += pge_pos_x + pge_pos_y * 16;
 
 		CollisionSlot2 *slot1 = _col_slots2Next;
-		int16_t i = 255;
+		CollisionSlot2 *slot2 = 0;
+		int16 i = 255;
 		pge_pos_x = i;
 		if (_pge_currentPiegeFacingDir) {
 			i = pge_unk1C - 1;
@@ -2073,6 +2074,7 @@ int Game::pge_updateCollisionState(LivePGE *pge, int16_t pge_dy, uint8_t var8) {
 				return 1;
 			} else {
 				++i;
+				slot2 = slot1;
 				slot1 = slot1->next_slot;
 				if (--i == 0) {
 					break;
@@ -2083,8 +2085,8 @@ int Game::pge_updateCollisionState(LivePGE *pge, int16_t pge_dy, uint8_t var8) {
 			slot1 = _col_slots2Cur;
 			slot1->unk2 = grid_data;
 			slot1->data_size = pge_unk1C - 1;
-			uint8_t *dst = &slot1->data_buf[0];
-			int8_t *src = grid_data;
+			uint8 *dst = &slot1->data_buf[0];
+			int8 *src = grid_data;
 			int n = pge_unk1C;
 			assert(n < 0x10);
 			while (n--) {
@@ -2099,14 +2101,14 @@ int Game::pge_updateCollisionState(LivePGE *pge, int16_t pge_dy, uint8_t var8) {
 	return 1;
 }
 
-int Game::pge_ZOrder(LivePGE *pge, int16_t num, pge_ZOrderCallback compare, uint16_t unk) {
-	uint8_t slot = pge->collision_slot;
+int Game::pge_ZOrder(LivePGE *pge, int16 num, pge_ZOrderCallback compare, uint16 unk) {
+	uint8 slot = pge->collision_slot;
 	while (slot != 0xFF) {
 		CollisionSlot *cs = _col_slotsTable[slot];
 		if (cs == 0) {
 			return 0;
 		}
-		uint8_t slot_bak = slot;
+		uint8 slot_bak = slot;
 		slot = 0xFF;
 		while (cs != 0) {
 			if ((this->*compare)(cs->live_pge, pge, num, unk) != 0) {
@@ -2124,7 +2126,7 @@ int Game::pge_ZOrder(LivePGE *pge, int16_t num, pge_ZOrderCallback compare, uint
 	return 0;
 }
 
-void Game::pge_updateGroup(uint8_t idx, uint8_t unk1, int16_t unk2) {
+void Game::pge_updateGroup(uint8 idx, uint8 unk1, int16 unk2) {
 	debug(DBG_GAME, "Game::pge_updateGroup() idx=0x%X unk1=0x%X unk2=0x%X", idx, unk1, unk2);
 	LivePGE *pge = &_pgeLive[unk1];
 	if (!(pge->flags & 4)) {
@@ -2135,7 +2137,7 @@ void Game::pge_updateGroup(uint8_t idx, uint8_t unk1, int16_t unk2) {
 		_pge_liveTable2[unk1] = pge;
 	}
 	if (unk2 <= 4) {
-		uint8_t pge_room = pge->room_location;
+		uint8 pge_room = pge->room_location;
 		pge = &_pgeLive[idx];
 		if (pge_room != pge->room_location) {
 			return;
@@ -2168,7 +2170,7 @@ void Game::pge_removeFromInventory(LivePGE *pge1, LivePGE *pge2, LivePGE *pge3) 
 	}
 }
 
-int Game::pge_ZOrderByAnimY(LivePGE *pge1, LivePGE *pge2, uint8_t comp, uint8_t comp2) {
+int Game::pge_ZOrderByAnimY(LivePGE *pge1, LivePGE *pge2, uint8 comp, uint8 comp2) {
 	if (pge1 != pge2) {
 		if (_res.getAniData(pge1->obj_type)[3] == comp) {
 			return 1;
@@ -2177,7 +2179,7 @@ int Game::pge_ZOrderByAnimY(LivePGE *pge1, LivePGE *pge2, uint8_t comp, uint8_t 
 	return 0;
 }
 
-int Game::pge_ZOrderByAnimYIfType(LivePGE *pge1, LivePGE *pge2, uint8_t comp, uint8_t comp2) {
+int Game::pge_ZOrderByAnimYIfType(LivePGE *pge1, LivePGE *pge2, uint8 comp, uint8 comp2) {
 	if (pge1->init_PGE->object_type == comp2) {
 		if (_res.getAniData(pge1->obj_type)[3] == comp) {
 			return 1;
@@ -2186,7 +2188,7 @@ int Game::pge_ZOrderByAnimYIfType(LivePGE *pge1, LivePGE *pge2, uint8_t comp, ui
 	return 0;
 }
 
-int Game::pge_ZOrderIfIndex(LivePGE *pge1, LivePGE *pge2, uint8_t comp, uint8_t comp2) {
+int Game::pge_ZOrderIfIndex(LivePGE *pge1, LivePGE *pge2, uint8 comp, uint8 comp2) {
 	if (pge1->index != comp2) {
 		pge_updateGroup(pge2->index, pge1->index, comp);
 		return 1;
@@ -2194,7 +2196,7 @@ int Game::pge_ZOrderIfIndex(LivePGE *pge1, LivePGE *pge2, uint8_t comp, uint8_t 
 	return 0;
 }
 
-int Game::pge_ZOrderByIndex(LivePGE *pge1, LivePGE *pge2, uint8_t comp, uint8_t comp2) {
+int Game::pge_ZOrderByIndex(LivePGE *pge1, LivePGE *pge2, uint8 comp, uint8 comp2) {
 	if (pge1 != pge2) {
 		pge_updateGroup(pge2->index, pge1->index, comp);
 		_pge_compareVar1 = 0xFFFF;
@@ -2202,7 +2204,7 @@ int Game::pge_ZOrderByIndex(LivePGE *pge1, LivePGE *pge2, uint8_t comp, uint8_t 
 	return 0;
 }
 
-int Game::pge_ZOrderByObj(LivePGE *pge1, LivePGE *pge2, uint8_t comp, uint8_t comp2) {
+int Game::pge_ZOrderByObj(LivePGE *pge1, LivePGE *pge2, uint8 comp, uint8 comp2) {
 	if (comp == 10) {
 		if (pge1->init_PGE->object_type == comp && pge1->life >= 0) {
 			return 1;
@@ -2215,7 +2217,7 @@ int Game::pge_ZOrderByObj(LivePGE *pge1, LivePGE *pge2, uint8_t comp, uint8_t co
 	return 0;
 }
 
-int Game::pge_ZOrderIfDifferentDirection(LivePGE *pge1, LivePGE *pge2, uint8_t comp, uint8_t comp2) {
+int Game::pge_ZOrderIfDifferentDirection(LivePGE *pge1, LivePGE *pge2, uint8 comp, uint8 comp2) {
 	if (pge1 != pge2) {
 		if ((pge1->flags & 1) != (pge2->flags & 1)) {
 			_pge_compareVar1 = 1;
@@ -2228,7 +2230,7 @@ int Game::pge_ZOrderIfDifferentDirection(LivePGE *pge1, LivePGE *pge2, uint8_t c
 	return 0;
 }
 
-int Game::pge_ZOrderIfSameDirection(LivePGE *pge1, LivePGE *pge2, uint8_t comp, uint8_t comp2) {
+int Game::pge_ZOrderIfSameDirection(LivePGE *pge1, LivePGE *pge2, uint8 comp, uint8 comp2) {
 	if (pge1 != pge2) {
 		if ((pge1->flags & 1) == (pge2->flags & 1)) {
 			_pge_compareVar2 = 1;
@@ -2241,7 +2243,7 @@ int Game::pge_ZOrderIfSameDirection(LivePGE *pge1, LivePGE *pge2, uint8_t comp, 
 	return 0;
 }
 
-int Game::pge_ZOrderIfTypeAndSameDirection(LivePGE *pge1, LivePGE *pge2, uint8_t comp, uint8_t comp2) {
+int Game::pge_ZOrderIfTypeAndSameDirection(LivePGE *pge1, LivePGE *pge2, uint8 comp, uint8 comp2) {
 	if (pge1->init_PGE->object_type == comp) {
 		if ((pge1->flags & 1) == (pge2->flags & 1)) {
 			return 1;
@@ -2250,7 +2252,7 @@ int Game::pge_ZOrderIfTypeAndSameDirection(LivePGE *pge1, LivePGE *pge2, uint8_t
 	return 0;
 }
 
-int Game::pge_ZOrderIfTypeAndDifferentDirection(LivePGE *pge1, LivePGE *pge2, uint8_t comp, uint8_t comp2) {
+int Game::pge_ZOrderIfTypeAndDifferentDirection(LivePGE *pge1, LivePGE *pge2, uint8 comp, uint8 comp2) {
 	if (pge1->init_PGE->object_type == comp) {
 		if ((pge1->flags & 1) != (pge2->flags & 1)) {
 			return 1;
@@ -2259,6 +2261,6 @@ int Game::pge_ZOrderIfTypeAndDifferentDirection(LivePGE *pge1, LivePGE *pge2, ui
 	return 0;
 }
 
-int Game::pge_ZOrderByNumber(LivePGE *pge1, LivePGE *pge2, uint8_t comp, uint8_t comp2) {
+int Game::pge_ZOrderByNumber(LivePGE *pge1, LivePGE *pge2, uint8 comp, uint8 comp2) {
 	return pge1 - pge2;
 }

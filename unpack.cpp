@@ -37,8 +37,8 @@ static int next_chunk(UnpackCtx *uc) {
 	return CF;
 }
 
-static uint16_t get_code(UnpackCtx *uc, uint8_t num_chunks) {
-	uint16_t c = 0;
+static uint16 get_code(UnpackCtx *uc, uint8 num_chunks) {
+	uint16 c = 0;
 	while (num_chunks--) {
 		c <<= 1;
 		if (next_chunk(uc)) {
@@ -48,18 +48,18 @@ static uint16_t get_code(UnpackCtx *uc, uint8_t num_chunks) {
 	return c;
 }
 
-static void dec_unk1(UnpackCtx *uc, uint8_t num_chunks, uint8_t add_count) {
-	uint16_t count = get_code(uc, num_chunks) + add_count + 1;
+static void dec_unk1(UnpackCtx *uc, uint8 num_chunks, uint8 add_count) {
+	uint16 count = get_code(uc, num_chunks) + add_count + 1;
 	uc->datasize -= count;
 	while (count--) {
-		*uc->dst = (uint8_t)get_code(uc, 8);
+		*uc->dst = (uint8)get_code(uc, 8);
 		--uc->dst;
 	}
 }
 
-static void dec_unk2(UnpackCtx *uc, uint8_t num_chunks) {
-	uint16_t i = get_code(uc, num_chunks);
-	uint16_t count = uc->size + 1;
+static void dec_unk2(UnpackCtx *uc, uint8 num_chunks) {
+	uint16 i = get_code(uc, num_chunks);
+	uint16 count = uc->size + 1;
 	uc->datasize -= count;
 	while (count--) {
 		*uc->dst = *(uc->dst + i);
@@ -67,7 +67,7 @@ static void dec_unk2(UnpackCtx *uc, uint8_t num_chunks) {
 	}
 }
 
-bool delphine_unpack(uint8_t *dst, const uint8_t *src, int len) {
+bool delphine_unpack(uint8 *dst, const uint8 *src, int len) {
 	UnpackCtx uc;
 	uc.src = src + len - 4;
 	uc.datasize = READ_BE_UINT32(uc.src); uc.src -= 4;
@@ -86,7 +86,7 @@ bool delphine_unpack(uint8_t *dst, const uint8_t *src, int len) {
 				dec_unk2(&uc, 8);
 			}
 		} else {
-			uint16_t c = get_code(&uc, 2);
+			uint16 c = get_code(&uc, 2);
 			if (c == 3) {
 				dec_unk1(&uc, 8, 8);
 			} else if (c < 2) {

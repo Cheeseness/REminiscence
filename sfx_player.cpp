@@ -23,7 +23,7 @@ SfxPlayer::SfxPlayer(Mixer *mixer)
 	: _mod(0), _playing(false), _mix(mixer) {
 }
 
-void SfxPlayer::play(uint8_t num) {
+void SfxPlayer::play(uint8 num) {
 	debug(DBG_SFX, "SfxPlayer::play(%d)", num);
 	if (!_playing) {
 		if (num >= 68 && num <= 75) {
@@ -51,7 +51,7 @@ void SfxPlayer::stop() {
 	}
 }
 
-void SfxPlayer::playSample(int channel, const uint8_t *sampleData, uint16_t period) {
+void SfxPlayer::playSample(int channel, const uint8 *sampleData, uint16 period) {
 	assert(channel < NUM_CHANNELS);
 	SampleInfo *si = &_samples[channel];
 	si->len = READ_BE_UINT16(sampleData); sampleData += 2;
@@ -76,10 +76,10 @@ void SfxPlayer::handleTick() {
 	} else {
 		_orderDelay = READ_BE_UINT16(_mod->moduleData + 2);
 		debug(DBG_SFX, "curOrder=%d/%d _orderDelay=%d\n", _curOrder, _numOrders, _orderDelay);
-		int16_t period = 0;
+		int16 period = 0;
 		for (int ch = 0; ch < 3; ++ch) {
-			const uint8_t *sampleData = 0;
-			uint8_t b = *_modData++;
+			const uint8 *sampleData = 0;
+			uint8 b = *_modData++;
 			if (b != 0) {
 				--b;
 				assert(b < 5);
@@ -88,7 +88,7 @@ void SfxPlayer::handleTick() {
 			}
 			b = *_modData++;
 			if (b != 0) {
-				int16_t per = period + (b - 1);
+				int16 per = period + (b - 1);
 				if (per >= 0 && per < 40) {
 					per = _periodTable[per];
 				} else if (per == -3) {
@@ -108,11 +108,11 @@ void SfxPlayer::handleTick() {
 	}
 }
 
-void SfxPlayer::mixSamples(int8_t *buf, int samplesLen) {
+void SfxPlayer::mixSamples(int8 *buf, int samplesLen) {
 	for (int i = 0; i < NUM_CHANNELS; ++i) {
 		SampleInfo *si = &_samples[i];
 		if (si->data) {
-			int8_t *mixbuf = buf;
+			int8 *mixbuf = buf;
 			int len = si->len << FRAC_BITS;
 			int loopLen = si->loopLen << FRAC_BITS;
 			int loopPos = si->loopPos << FRAC_BITS;
@@ -143,11 +143,11 @@ void SfxPlayer::mixSamples(int8_t *buf, int samplesLen) {
 				}
 			}
 			si->pos = pos;
-		}
+     	}
 	}
 }
 
-bool SfxPlayer::mix(int8_t *buf, int len) {
+bool SfxPlayer::mix(int8 *buf, int len) {
 	if (_playing) {
 		memset(buf, 0, len);
 		const int samplesPerTick = _mix->getSampleRate() / 50;
@@ -169,6 +169,6 @@ bool SfxPlayer::mix(int8_t *buf, int len) {
 	return _playing;
 }
 
-bool SfxPlayer::mixCallback(void *param, int8_t *buf, int len) {
+bool SfxPlayer::mixCallback(void *param, int8 *buf, int len) {
 	return ((SfxPlayer *)param)->mix(buf, len);
 }

@@ -52,14 +52,14 @@ struct Locale {
 	static const char *_textsTableEN[];
 	static const char *_textsTableDE[];
 	static const char *_textsTableSP[];
-	static const uint8_t _stringsTableFR[];
-	static const uint8_t _stringsTableEN[];
-	static const uint8_t _stringsTableDE[];
-	static const uint8_t _stringsTableSP[];
+	static const uint8 _stringsTableFR[];
+	static const uint8 _stringsTableEN[];
+	static const uint8 _stringsTableDE[];
+	static const uint8 _stringsTableSP[];
 
 	Version _ver;
 	const char **_textsTable;
-	const uint8_t *_stringsTable;
+	const uint8 *_stringsTable;
 
 	Locale(Version ver);
 	const char *get(int id) const;

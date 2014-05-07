@@ -21,35 +21,35 @@
 #include "intern.h"
 
 struct MixerChunk {
-	uint8_t *data;
-	uint32_t len;
+	uint8 *data;
+	uint32 len;
 
 	MixerChunk()
 		: data(0), len(0) {
 	}
 
-	int8_t getPCM(int offset) const {
+	int8 getPCM(int offset) const {
 		if (offset < 0) {
 			offset = 0;
 		} else if (offset >= (int)len) {
 			offset = len - 1;
 		}
-		return (int8_t)data[offset];
+		return (int8)data[offset];
 	}
 };
 
 struct MixerChannel {
-	uint8_t active;
-	uint8_t volume;
+	uint8 active;
+	uint8 volume;
 	MixerChunk chunk;
-	uint32_t chunkPos;
-	uint32_t chunkInc;
+	uint32 chunkPos;
+	uint32 chunkInc;
 };
 
 struct SystemStub;
 
 struct Mixer {
-	typedef bool (*PremixHook)(void *userData, int8_t *buf, int len);
+	typedef bool (*PremixHook)(void *userData, int8 *buf, int len);
 
 	enum {
 		NUM_CHANNELS = 4,
@@ -66,13 +66,13 @@ struct Mixer {
 	void init();
 	void free();
 	void setPremixHook(PremixHook premixHook, void *userData);
-	void play(const MixerChunk *mc, uint16_t freq, uint8_t volume);
+	void play(const MixerChunk *mc, uint16 freq, uint8 volume);
 	void stopAll();
-	uint32_t getSampleRate() const;
-	void mix(int8_t *buf, int len);
+	uint32 getSampleRate() const;
+	void mix(int8 *buf, int len);
 
-	static void addclamp(int8_t &a, int b);
-	static void mixCallback(void *param, int8_t *buf, int len);
+	static void addclamp(int8 &a, int b);
+	static void mixCallback(void *param, uint8 *buf, int len);
 };
 
 template <class T>

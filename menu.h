@@ -20,6 +20,7 @@
 
 #include "intern.h"
 
+struct ModPlayer;
 struct Resource;
 struct SystemStub;
 struct Video;
@@ -40,27 +41,28 @@ struct Menu {
 
 	static const char *_passwords[8][3];
 
+	ModPlayer *_ply;
 	Resource *_res;
 	SystemStub *_stub;
 	Video *_vid;
 
 	const char **_textOptions;
-	uint8_t _charVar1;
-	uint8_t _charVar2;
-	uint8_t _charVar3;
-	uint8_t _charVar4;
-	uint8_t _charVar5;
+	uint8 _charVar1;
+	uint8 _charVar2;
+	uint8 _charVar3;
+	uint8 _charVar4;
+	uint8 _charVar5;
 
-	Menu(Resource *res, SystemStub *stub, Video *vid);
+	Menu(ModPlayer *ply, Resource *res, SystemStub *stub, Video *vid);
 
-	void drawString(const char *str, int16_t y, int16_t x, uint8_t color);
-	void drawString2(const char *str, int16_t y, int16_t x);
+	void drawString(const char *str, int16 y, int16 x, uint8 color);
+	void drawString2(const char *str, int16 y, int16 x);
 	void loadPicture(const char *prefix);
 	void handleInfoScreen();
-	void handleSkillScreen(uint8_t &new_skill);
-	bool handlePasswordScreen(uint8_t &new_skill, uint8_t &new_level);
-	bool handleLevelScreen(uint8_t &new_skill, uint8_t &new_level);
-	bool handleTitleScreen(uint8_t &new_skill, uint8_t &new_level);
+	void handleSkillScreen(uint8 &new_skill);
+	bool handlePasswordScreen(uint8 &new_skill, uint8 &new_level);
+	bool handleLevelScreen(uint8 &new_skill, uint8 &new_level);
+	bool handleTitleScreen(uint8 &new_skill, uint8 &new_level);
 };
 
 #endif // MENU_H__

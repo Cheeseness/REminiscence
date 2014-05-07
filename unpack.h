@@ -23,13 +23,13 @@
 
 struct UnpackCtx {
 	int size, datasize;
-	uint32_t crc;
-	uint32_t chk;
-	uint8_t *dst;
-	const uint8_t *src;
+	uint32 crc;
+	uint32 chk;
+	uint8 *dst;
+	const uint8 *src;
 };
 
-extern bool delphine_unpack(uint8_t *dst, const uint8_t *src, int len);
+extern bool delphine_unpack(uint8 *dst, const uint8 *src, int len);
 
 
 #endif // UNPACK_H__

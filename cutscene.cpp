@@ -15,22 +15,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "mod_player.h"
 #include "resource.h"
 #include "systemstub.h"
 #include "video.h"
 #include "cutscene.h"
 
 
-Cutscene::Cutscene(Resource *res, SystemStub *stub, Video *vid)
-	: _res(res), _stub(stub), _vid(vid) {
+Cutscene::Cutscene(ModPlayer *ply, Resource *res, SystemStub *stub, Video *vid)
+	: _ply(ply), _res(res), _stub(stub), _vid(vid) {
 	memset(_palBuf, 0, sizeof(_palBuf));
 }
 
 void Cutscene::sync() {
 	// XXX input handling
 	if (!(_stub->_pi.dbgMask & PlayerInput::DF_FASTMODE)) {
-		int32_t delay = _stub->getTimeStamp() - _tstamp;
-		int32_t pause = _frameDelay * TIMER_SLICE - delay;
+		int32 delay = _stub->getTimeStamp() - _tstamp;
+		int32 pause = _frameDelay * TIMER_SLICE - delay;
 		if (pause > 0) {
 			_stub->sleep(pause);
 		}
@@ -38,8 +39,8 @@ void Cutscene::sync() {
 	_tstamp = _stub->getTimeStamp();
 }
 
-void Cutscene::copyPalette(const uint8_t *pal, uint16_t num) {
-	uint8_t *dst = (uint8_t *)_palBuf;
+void Cutscene::copyPalette(const uint8 *pal, uint16 num) {
+	uint8 *dst = (uint8 *)_palBuf;
 	if (num != 0) {
 		dst += 0x20;
 	}
@@ -49,10 +50,10 @@ void Cutscene::copyPalette(const uint8_t *pal, uint16_t num) {
 
 void Cutscene::updatePalette() {
 	if (_newPal) {
-		const uint8_t *p = _palBuf;
+		const uint8 *p = _palBuf;
 		for (int i = 0; i < 32; ++i) {
-			uint16_t color = READ_BE_UINT16(p); p += 2;
-			uint8_t t = (color == 0) ? 0 : 3;
+			uint16 color = READ_BE_UINT16(p); p += 2;
+			uint8 t = (color == 0) ? 0 : 3;
 			Color c;
 			c.r = ((color & 0xF00) >> 6) | t;
 			c.g = ((color & 0x0F0) >> 2) | t;
@@ -71,23 +72,23 @@ void Cutscene::setPalette() {
 	_stub->updateScreen(0);
 }
 
-void Cutscene::initRotationData(uint16_t a, uint16_t b, uint16_t c) {
-	int16_t n1 = _sinTable[a];
-	int16_t n2 = _cosTable[a];
-	int16_t n3 = _sinTable[c];
-	int16_t n4 = _cosTable[c];
-	int16_t n5 = _sinTable[b];
-	int16_t n6 = _cosTable[b];
+void Cutscene::initRotationData(uint16 a, uint16 b, uint16 c) {
+	int16 n1 = _sinTable[a];
+	int16 n2 = _cosTable[a];
+	int16 n3 = _sinTable[c];
+	int16 n4 = _cosTable[c];
+	int16 n5 = _sinTable[b];
+	int16 n6 = _cosTable[b];
 	_rotData[0] = ((n2 * n6) >> 8) - ((((n4 * n1) >> 8) * n5) >> 8);
 	_rotData[1] = ((n1 * n6) >> 8) + ((((n4 * n2) >> 8) * n5) >> 8);
 	_rotData[2] = ( n3 * n1) >> 8;
 	_rotData[3] = (-n3 * n2) >> 8;
 }
 
-uint16_t Cutscene::findTextSeparators(const uint8_t *p) {
-	uint8_t *q = _textSep;
-	uint16_t ret = 0;
-	uint16_t pos = 0;
+uint16 Cutscene::findTextSeparators(const uint8 *p) {
+	uint8 *q = _textSep;
+	uint16 ret = 0;
+	uint16 pos = 0;
 	for (; *p != 0xA; ++p) {
 		if (*p == 0x7C) {
 			*q++ = pos;
@@ -107,20 +108,20 @@ uint16_t Cutscene::findTextSeparators(const uint8_t *p) {
 	return ret;
 }
 
-void Cutscene::drawText(int16_t x, int16_t y, const uint8_t *p, uint16_t color, uint8_t *page, uint8_t n) {
+void Cutscene::drawText(int16 x, int16 y, const uint8 *p, uint16 color, uint8 *page, uint8 n) {
 	debug(DBG_CUT, "Cutscene::drawText(x=%d, y=%d, c=%d)", x, y, color);
-	uint16_t last_sep = 0;
+	uint16 last_sep = 0;
 	if (n != 0) {
 		last_sep = findTextSeparators(p);
 		if (n != 2) {
 			last_sep = 30;
 		}
 	}
-	const uint8_t *sep = _textSep;
+	const uint8 *sep = _textSep;
 	y += 50;
 	x += 8;
-	int16_t yy = y;
-	int16_t xx = x;
+	int16 yy = y;
+	int16 xx = x;
 	if (n != 0) {
 		xx += ((last_sep - *sep++) & 0xFE) * 4;
 	}
@@ -134,12 +135,12 @@ void Cutscene::drawText(int16_t x, int16_t y, const uint8_t *p, uint16_t color, 
 		} else if (*p == 0x20) {
 			xx += 8;
 		} else {
-			uint8_t *dst_char = page + 256 * yy + xx;
-			const uint8_t *src = _res->_fnt + (*p - 32) * 32;
+			uint8 *dst_char = page + 256 * yy + xx;
+			const uint8 *src = _res->_fnt + (*p - 32) * 32;
 			for (int h = 0; h < 8; ++h) {
 				for (int w = 0; w < 4; ++w) {
-					uint8_t c1 = (*src & 0xF0) >> 4;
-					uint8_t c2 = (*src & 0x0F) >> 0;
+					uint8 c1 = (*src & 0xF0) >> 4;
+					uint8 c2 = (*src & 0x0F) >> 0;
 					++src;
 					if (c1 != 0) {
 						*dst_char = (c1 == 0xF) ? color : (0xE0 + c1);
@@ -175,7 +176,7 @@ void Cutscene::drawCreditsText() {
 			}
 		}
 		if (_creditsTextCounter <= 0) { // XXX
-			uint8_t code = *_textCurPtr;
+			uint8 code = *_textCurPtr;
 			if (code == 0xFF) {
 				_textBuf[0] = 0xA;
 //				_cut_status = 0;
@@ -207,31 +208,31 @@ void Cutscene::drawCreditsText() {
 	}
 }
 
-void Cutscene::drawProtectionShape(uint8_t shapeNum, int16_t zoom) {
+void Cutscene::drawProtectionShape(uint8 shapeNum, int16 zoom) {
 	debug(DBG_CUT, "Cutscene::drawProtectionShape() shapeNum = %d", shapeNum);
 	_shape_ix = 64;
 	_shape_iy = 64;
 	_shape_count = 0;
 
-	int16_t x = 0;
-	int16_t y = 0;
+	int16 x = 0;
+	int16 y = 0;
 	zoom += 512;
 	initRotationData(0, 180, 90);
 
-	const uint8_t *shapeOffsetTable    = _protectionShapeData + READ_BE_UINT16(_protectionShapeData + 0x02);
-	const uint8_t *shapeDataTable      = _protectionShapeData + READ_BE_UINT16(_protectionShapeData + 0x0E);
-	const uint8_t *verticesOffsetTable = _protectionShapeData + READ_BE_UINT16(_protectionShapeData + 0x0A);
-	const uint8_t *verticesDataTable   = _protectionShapeData + READ_BE_UINT16(_protectionShapeData + 0x12);
+	const uint8 *shapeOffsetTable    = _protectionShapeData + READ_BE_UINT16(_protectionShapeData + 0x02);
+	const uint8 *shapeDataTable      = _protectionShapeData + READ_BE_UINT16(_protectionShapeData + 0x0E);
+	const uint8 *verticesOffsetTable = _protectionShapeData + READ_BE_UINT16(_protectionShapeData + 0x0A);
+	const uint8 *verticesDataTable   = _protectionShapeData + READ_BE_UINT16(_protectionShapeData + 0x12);
 
 	++shapeNum;
-	const uint8_t *shapeData = shapeDataTable + READ_BE_UINT16(shapeOffsetTable + (shapeNum & 0x7FF) * 2);
-	uint16_t primitiveCount = READ_BE_UINT16(shapeData); shapeData += 2;
+	const uint8 *shapeData = shapeDataTable + READ_BE_UINT16(shapeOffsetTable + (shapeNum & 0x7FF) * 2);
+	uint16 primitiveCount = READ_BE_UINT16(shapeData); shapeData += 2;
 
 	while (primitiveCount--) {
-		uint16_t verticesOffset = READ_BE_UINT16(shapeData); shapeData += 2;
-		const uint8_t *p = verticesDataTable + READ_BE_UINT16(verticesOffsetTable + (verticesOffset & 0x3FFF) * 2);
-		int16_t dx = 0;
-		int16_t dy = 0;
+		uint16 verticesOffset = READ_BE_UINT16(shapeData); shapeData += 2;
+		const uint8 *p = verticesDataTable + READ_BE_UINT16(verticesOffsetTable + (verticesOffset & 0x3FFF) * 2);
+		int16 dx = 0;
+		int16 dy = 0;
 		if (verticesOffset & 0x8000) {
 			dx = READ_BE_UINT16(shapeData); shapeData += 2;
 			dy = READ_BE_UINT16(shapeData); shapeData += 2;
@@ -265,7 +266,7 @@ void Cutscene::op_refreshScreen() {
 void Cutscene::op_waitForSync() {
 	debug(DBG_CUT, "Cutscene::op_waitForSync()");
 	if (_creditsSequence) {
-		uint16_t n = fetchNextCmdByte() * 2;
+		uint16 n = fetchNextCmdByte() * 2;
 		do {
 			_varText = 0xFF;
 			_frameDelay = 3;
@@ -284,16 +285,16 @@ void Cutscene::op_waitForSync() {
 	}
 }
 
-void Cutscene::drawShape(const uint8_t *data, int16_t x, int16_t y) {
+void Cutscene::drawShape(const uint8 *data, int16 x, int16 y) {
 	debug(DBG_CUT, "Cutscene::drawShape()");
 	_gfx._layer = _page1;
-	uint8_t numVertices = *data++;
+	uint8 numVertices = *data++;
 	if (numVertices & 0x80) {
 		Point pt;
 		pt.x = READ_BE_UINT16(data) + x; data += 2;
 		pt.y = READ_BE_UINT16(data) + y; data += 2;
-		uint16_t rx = READ_BE_UINT16(data); data += 2;
-		uint16_t ry = READ_BE_UINT16(data); data += 2;
+		uint16 rx = READ_BE_UINT16(data); data += 2;
+		uint16 ry = READ_BE_UINT16(data); data += 2;
 		_gfx.drawEllipse(_primitiveColor, _hasAlphaColor, &pt, rx, ry);
 	} else if (numVertices == 0) {
 		Point pt;
@@ -302,16 +303,16 @@ void Cutscene::drawShape(const uint8_t *data, int16_t x, int16_t y) {
 		_gfx.drawPoint(_primitiveColor, &pt);
 	} else {
 		Point *pt = _vertices;
-		int16_t ix = READ_BE_UINT16(data); data += 2;
-		int16_t iy = READ_BE_UINT16(data); data += 2;
+		int16 ix = READ_BE_UINT16(data); data += 2;
+		int16 iy = READ_BE_UINT16(data); data += 2;
 		pt->x = ix + x;
 		pt->y = iy + y;
 		++pt;
-		int16_t n = numVertices - 1;
+		int16 n = numVertices - 1;
 		++numVertices;
 		for (; n >= 0; --n) {
-			int16_t dx = (int8_t)*data++;
-			int16_t dy = (int8_t)*data++;
+			int16 dx = (int8)*data++;
+			int16 dy = (int8)*data++;
 			if (dy == 0 && n != 0 && *(data + 1) == 0) {
 				ix += dx;
 				--numVertices;
@@ -330,33 +331,33 @@ void Cutscene::drawShape(const uint8_t *data, int16_t x, int16_t y) {
 void Cutscene::op_drawShape() {
 	debug(DBG_CUT, "Cutscene::op_drawShape()");
 
-	int16_t x = 0;
-	int16_t y = 0;
-	uint16_t shapeOffset = fetchNextCmdWord();
+	int16 x = 0;
+	int16 y = 0;
+	uint16 shapeOffset = fetchNextCmdWord();
 	if (shapeOffset & 0x8000) {
 		x = fetchNextCmdWord();
 		y = fetchNextCmdWord();
 	}
 
-	const uint8_t *shapeOffsetTable    = _polPtr + READ_BE_UINT16(_polPtr + 0x02);
-	const uint8_t *shapeDataTable      = _polPtr + READ_BE_UINT16(_polPtr + 0x0E);
-	const uint8_t *verticesOffsetTable = _polPtr + READ_BE_UINT16(_polPtr + 0x0A);
-	const uint8_t *verticesDataTable   = _polPtr + READ_BE_UINT16(_polPtr + 0x12);
+	const uint8 *shapeOffsetTable    = _polPtr + READ_BE_UINT16(_polPtr + 0x02);
+	const uint8 *shapeDataTable      = _polPtr + READ_BE_UINT16(_polPtr + 0x0E);
+	const uint8 *verticesOffsetTable = _polPtr + READ_BE_UINT16(_polPtr + 0x0A);
+	const uint8 *verticesDataTable   = _polPtr + READ_BE_UINT16(_polPtr + 0x12);
 
-	const uint8_t *shapeData = shapeDataTable + READ_BE_UINT16(shapeOffsetTable + (shapeOffset & 0x7FF) * 2);
-	uint16_t primitiveCount = READ_BE_UINT16(shapeData); shapeData += 2;
+	const uint8 *shapeData = shapeDataTable + READ_BE_UINT16(shapeOffsetTable + (shapeOffset & 0x7FF) * 2);
+	uint16 primitiveCount = READ_BE_UINT16(shapeData); shapeData += 2;
 
 	while (primitiveCount--) {
-		uint16_t verticesOffset = READ_BE_UINT16(shapeData); shapeData += 2;
-		const uint8_t *primitiveVertices = verticesDataTable + READ_BE_UINT16(verticesOffsetTable + (verticesOffset & 0x3FFF) * 2);
-		int16_t dx = 0;
-		int16_t dy = 0;
+		uint16 verticesOffset = READ_BE_UINT16(shapeData); shapeData += 2;
+		const uint8 *primitiveVertices = verticesDataTable + READ_BE_UINT16(verticesOffsetTable + (verticesOffset & 0x3FFF) * 2);
+		int16 dx = 0;
+		int16 dy = 0;
 		if (verticesOffset & 0x8000) {
 			dx = READ_BE_UINT16(shapeData); shapeData += 2;
 			dy = READ_BE_UINT16(shapeData); shapeData += 2;
 		}
 		_hasAlphaColor = (verticesOffset & 0x4000) != 0;
-		uint8_t color = *shapeData++;
+		uint8 color = *shapeData++;
 		if (_clearScreen == 0) {
 			color += 0x10;
 		}
@@ -370,10 +371,10 @@ void Cutscene::op_drawShape() {
 
 void Cutscene::op_setPalette() {
 	debug(DBG_CUT, "Cutscene::op_setPalette()");
-	uint8_t num = fetchNextCmdByte();
-	uint8_t palNum = fetchNextCmdByte();
-	uint16_t off = READ_BE_UINT16(_polPtr + 6);
-	const uint8_t *p = _polPtr + off + num * 32;
+	uint8 num = fetchNextCmdByte();
+	uint8 palNum = fetchNextCmdByte();
+	uint16 off = READ_BE_UINT16(_polPtr + 6);
+	const uint8 *p = _polPtr + off + num * 32;
 	copyPalette(p, palNum ^ 1);
 	if (_creditsSequence) {
 		_palBuf[0x20] = 0x0F;
@@ -383,13 +384,13 @@ void Cutscene::op_setPalette() {
 
 void Cutscene::op_drawStringAtBottom() {
 	debug(DBG_CUT, "Cutscene::op_drawStringAtBottom()");
-	uint16_t strId = fetchNextCmdWord();
+	uint16 strId = fetchNextCmdWord();
 	if (!_creditsSequence) {
 		memset(_pageC + 179 * 256, 0xC0, 45 * 256);
 		memset(_page1 + 179 * 256, 0xC0, 45 * 256);
 		memset(_page0 + 179 * 256, 0xC0, 45 * 256);
 		if (strId != 0xFFFF) {
-			const uint8_t *str = _res->getCineString(strId);
+			const uint8 *str = _res->getCineString(strId);
 			if (str) {
 				drawText(0, 129, str, 0xEF, _page1, 1);
 				drawText(0, 129, str, 0xEF, _pageC, 1);
@@ -416,12 +417,12 @@ void Cutscene::op_refreshAll() {
 	op_handleKeys();
 }
 
-void Cutscene::drawShapeScale(const uint8_t *data, int16_t zoom, int16_t b, int16_t c, int16_t d, int16_t e, int16_t f, int16_t g) {
+void Cutscene::drawShapeScale(const uint8 *data, int16 zoom, int16 b, int16 c, int16 d, int16 e, int16 f, int16 g) {
 	debug(DBG_CUT, "Cutscene::drawShapeScale(%d, %d, %d, %d, %d, %d, %d)", zoom, b, c, d, e, f, g);
 	_gfx._layer = _page1;
-	uint8_t numVertices = *data++;
+	uint8 numVertices = *data++;
 	if (numVertices & 0x80) {
-		int16_t x, y;
+		int16 x, y;
 		Point *pt = _vertices;
 		Point pr[2];
 		_shape_cur_x = b + READ_BE_UINT16(data); data += 2;
@@ -465,8 +466,8 @@ void Cutscene::drawShapeScale(const uint8_t *data, int16_t zoom, int16_t b, int1
 		Point po;
 		po.x = _vertices[0].x + d + _shape_ix;
 		po.y = _vertices[0].y + e + _shape_iy;
-		int16_t rx = _vertices[0].x - _vertices[2].x;
-		int16_t ry = _vertices[0].y - _vertices[1].y;
+		int16 rx = _vertices[0].x - _vertices[2].x;
+		int16 ry = _vertices[0].y - _vertices[1].y;
 		_gfx.drawEllipse(_primitiveColor, _hasAlphaColor, &po, rx, ry);
 	} else if (numVertices == 0) {
 		Point pt;
@@ -492,7 +493,7 @@ void Cutscene::drawShapeScale(const uint8_t *data, int16_t zoom, int16_t b, int1
 		_gfx.drawPoint(_primitiveColor, &pt);
 	} else {
 		Point *pt = _vertices;
-		int16_t ix, iy;
+		int16 ix, iy;
 		_shape_cur_x = ix = READ_BE_UINT16(data) + b; data += 2;
 		_shape_cur_y = iy = READ_BE_UINT16(data) + c; data += 2;
 		if (_shape_count == 0) {
@@ -510,12 +511,12 @@ void Cutscene::drawShapeScale(const uint8_t *data, int16_t zoom, int16_t b, int1
 			pt->y = iy = ((_shape_cur_y16 + 0x8000) >> 16) + _shape_iy + e;
 			++pt;
 		}
-		int16_t n = numVertices - 1;
+		int16 n = numVertices - 1;
 		++numVertices;
-		int16_t sx = 0;
+		int16 sx = 0;
 		for (; n >= 0; --n) {
-			ix = (int8_t)(*data++) + sx;
-			iy = (int8_t)(*data++);
+			ix = (int8)(*data++) + sx;
+			iy = (int8)(*data++);
 			if (iy == 0 && n != 0 && *(data + 1) == 0) {
 				sx = ix;
 				--numVertices;
@@ -543,35 +544,35 @@ void Cutscene::op_drawShapeScale() {
 
 	_shape_count = 0;
 
-	int16_t x = 0;
-	int16_t y = 0;
-	uint16_t shapeOffset = fetchNextCmdWord();
+	int16 x = 0;
+	int16 y = 0;
+	uint16 shapeOffset = fetchNextCmdWord();
 	if (shapeOffset & 0x8000) {
 		x = fetchNextCmdWord();
 		y = fetchNextCmdWord();
 	}
 
-	uint16_t zoom = fetchNextCmdWord() + 512;
+	uint16 zoom = fetchNextCmdWord() + 512;
 	_shape_ix = fetchNextCmdByte();
 	_shape_iy = fetchNextCmdByte();
 
-	const uint8_t *shapeOffsetTable    = _polPtr + READ_BE_UINT16(_polPtr + 0x02);
-	const uint8_t *shapeDataTable      = _polPtr + READ_BE_UINT16(_polPtr + 0x0E);
-	const uint8_t *verticesOffsetTable = _polPtr + READ_BE_UINT16(_polPtr + 0x0A);
-	const uint8_t *verticesDataTable   = _polPtr + READ_BE_UINT16(_polPtr + 0x12);
+	const uint8 *shapeOffsetTable    = _polPtr + READ_BE_UINT16(_polPtr + 0x02);
+	const uint8 *shapeDataTable      = _polPtr + READ_BE_UINT16(_polPtr + 0x0E);
+	const uint8 *verticesOffsetTable = _polPtr + READ_BE_UINT16(_polPtr + 0x0A);
+	const uint8 *verticesDataTable   = _polPtr + READ_BE_UINT16(_polPtr + 0x12);
 
-	const uint8_t *shapeData = shapeDataTable + READ_BE_UINT16(shapeOffsetTable + (shapeOffset & 0x7FF) * 2);
-	uint16_t primitiveCount = READ_BE_UINT16(shapeData); shapeData += 2;
+	const uint8 *shapeData = shapeDataTable + READ_BE_UINT16(shapeOffsetTable + (shapeOffset & 0x7FF) * 2);
+	uint16 primitiveCount = READ_BE_UINT16(shapeData); shapeData += 2;
 
 	if (primitiveCount != 0) {
-		uint16_t verticesOffset = READ_BE_UINT16(shapeData);
-		int16_t dx = 0;
-		int16_t dy = 0;
+		uint16 verticesOffset = READ_BE_UINT16(shapeData);
+		int16 dx = 0;
+		int16 dy = 0;
 		if (verticesOffset & 0x8000) {
 			dx = READ_BE_UINT16(shapeData + 2);
 			dy = READ_BE_UINT16(shapeData + 4);
 		}
-		const uint8_t *p = verticesDataTable + READ_BE_UINT16(verticesOffsetTable + (verticesOffset & 0x3FFF) * 2) + 1;
+		const uint8 *p = verticesDataTable + READ_BE_UINT16(verticesOffsetTable + (verticesOffset & 0x3FFF) * 2) + 1;
 		_shape_ox = READ_BE_UINT16(p) + dx; p += 2;
 		_shape_oy = READ_BE_UINT16(p) + dy; p += 2;
 		while (primitiveCount--) {
@@ -584,7 +585,7 @@ void Cutscene::op_drawShapeScale() {
 				dy = READ_BE_UINT16(shapeData); shapeData += 2;
 			}
 			_hasAlphaColor = (verticesOffset & 0x4000) != 0;
-			uint8_t color = *shapeData++;
+			uint8 color = *shapeData++;
 			if (_clearScreen == 0) {
 				color += 0x10; // 2nd pal buf
 			}
@@ -595,12 +596,12 @@ void Cutscene::op_drawShapeScale() {
 	}
 }
 
-void Cutscene::drawShapeScaleRotate(const uint8_t *data, int16_t zoom, int16_t b, int16_t c, int16_t d, int16_t e, int16_t f, int16_t g) {
+void Cutscene::drawShapeScaleRotate(const uint8 *data, int16 zoom, int16 b, int16 c, int16 d, int16 e, int16 f, int16 g) {
 	debug(DBG_CUT, "Cutscene::drawShapeScaleRotate(%d, %d, %d, %d, %d, %d, %d)", zoom, b, c, d, e, f, g);
 	_gfx._layer = _page1;
-	uint8_t numVertices = *data++;
+	uint8 numVertices = *data++;
 	if (numVertices & 0x80) {
-		int16_t x, y, ix, iy;
+		int16 x, y, ix, iy;
 		Point pr[2];
 		Point *pt = _vertices;
 		_shape_cur_x = ix = b + READ_BE_UINT16(data); data += 2;
@@ -646,8 +647,8 @@ void Cutscene::drawShapeScaleRotate(const uint8_t *data, int16_t zoom, int16_t b
 		Point po;
 		po.x = _vertices[0].x + d + _shape_ix;
 		po.y = _vertices[0].y + e + _shape_iy;
-		int16_t rx = _vertices[0].x - _vertices[2].x;
-		int16_t ry = _vertices[0].y - _vertices[1].y;
+		int16 rx = _vertices[0].x - _vertices[2].x;
+		int16 ry = _vertices[0].y - _vertices[1].y;
 		_gfx.drawEllipse(_primitiveColor, _hasAlphaColor, &po, rx, ry);
 	} else if (numVertices == 0) {
 		Point pt;
@@ -676,7 +677,7 @@ void Cutscene::drawShapeScaleRotate(const uint8_t *data, int16_t zoom, int16_t b
 		_shape_prev_y16 = _shape_cur_y16;
 		_gfx.drawPoint(_primitiveColor, &pt);
 	} else {
-		int16_t x, y, a, shape_last_x, shape_last_y;
+		int16 x, y, a, shape_last_x, shape_last_y;
 		Point tempVertices[40];
 		_shape_cur_x = b + READ_BE_UINT16(data); data += 2;
 		x = _shape_cur_x;
@@ -696,13 +697,13 @@ void Cutscene::drawShapeScaleRotate(const uint8_t *data, int16_t zoom, int16_t b
 		}
 		_shape_cur_y = shape_last_y = a;
 
-		int16_t ix = x;
-		int16_t iy = y;
+		int16 ix = x;
+		int16 iy = y;
 		Point *pt2 = tempVertices;
-		int16_t sx = 0;
-		for (int16_t n = numVertices - 1; n >= 0; --n) {
-			x = (int8_t)(*data++) + sx;
-			y = (int8_t)(*data++);
+		int16 sx = 0;
+		for (int16 n = numVertices - 1; n >= 0; --n) {
+			x = (int8)(*data++) + sx;
+			y = (int8)(*data++);
 			if (y == 0 && n != 0 && *(data + 1) == 0) {
 				sx = x;
 				--numVertices;
@@ -761,22 +762,22 @@ void Cutscene::op_drawShapeScaleRotate() {
 
 	_shape_count = 0;
 
-	int16_t x = 0;
-	int16_t y = 0;
-	uint16_t shapeOffset = fetchNextCmdWord();
+	int16 x = 0;
+	int16 y = 0;
+	uint16 shapeOffset = fetchNextCmdWord();
 	if (shapeOffset & 0x8000) {
 		x = fetchNextCmdWord();
 		y = fetchNextCmdWord();
 	}
 
-	uint16_t zoom = 512;
+	uint16 zoom = 512;
 	if (shapeOffset & 0x4000) {
 		zoom += fetchNextCmdWord();
 	}
 	_shape_ix = fetchNextCmdByte();
 	_shape_iy = fetchNextCmdByte();
 
-	uint16_t r1, r2, r3;
+	uint16 r1, r2, r3;
 	r1 = fetchNextCmdWord();
 	r2 = 180;
 	if (shapeOffset & 0x2000) {
@@ -788,25 +789,25 @@ void Cutscene::op_drawShapeScaleRotate() {
 	}
 	initRotationData(r1, r2, r3);
 
-	const uint8_t *shapeOffsetTable    = _polPtr + READ_BE_UINT16(_polPtr + 0x02);
-	const uint8_t *shapeDataTable      = _polPtr + READ_BE_UINT16(_polPtr + 0x0E);
-	const uint8_t *verticesOffsetTable = _polPtr + READ_BE_UINT16(_polPtr + 0x0A);
-	const uint8_t *verticesDataTable   = _polPtr + READ_BE_UINT16(_polPtr + 0x12);
+	const uint8 *shapeOffsetTable    = _polPtr + READ_BE_UINT16(_polPtr + 0x02);
+	const uint8 *shapeDataTable      = _polPtr + READ_BE_UINT16(_polPtr + 0x0E);
+	const uint8 *verticesOffsetTable = _polPtr + READ_BE_UINT16(_polPtr + 0x0A);
+	const uint8 *verticesDataTable   = _polPtr + READ_BE_UINT16(_polPtr + 0x12);
 
-	const uint8_t *shapeData = shapeDataTable + READ_BE_UINT16(shapeOffsetTable + (shapeOffset & 0x7FF) * 2);
-	uint16_t primitiveCount = READ_BE_UINT16(shapeData); shapeData += 2;
+	const uint8 *shapeData = shapeDataTable + READ_BE_UINT16(shapeOffsetTable + (shapeOffset & 0x7FF) * 2);
+	uint16 primitiveCount = READ_BE_UINT16(shapeData); shapeData += 2;
 
 	while (primitiveCount--) {
-		uint16_t verticesOffset = READ_BE_UINT16(shapeData); shapeData += 2;
-		const uint8_t *p = verticesDataTable + READ_BE_UINT16(verticesOffsetTable + (verticesOffset & 0x3FFF) * 2);
-		int16_t dx = 0;
-		int16_t dy = 0;
+		uint16 verticesOffset = READ_BE_UINT16(shapeData); shapeData += 2;
+		const uint8 *p = verticesDataTable + READ_BE_UINT16(verticesOffsetTable + (verticesOffset & 0x3FFF) * 2);
+		int16 dx = 0;
+		int16 dy = 0;
 		if (verticesOffset & 0x8000) {
 			dx = READ_BE_UINT16(shapeData); shapeData += 2;
 			dy = READ_BE_UINT16(shapeData); shapeData += 2;
 		}
 		_hasAlphaColor = (verticesOffset & 0x4000) != 0;
-		uint8_t color = *shapeData++;
+		uint8 color = *shapeData++;
 		if (_clearScreen == 0) {
 			color += 0x10; // 2nd pal buf
 		}
@@ -829,14 +830,14 @@ void Cutscene::op_drawCreditsText() {
 
 void Cutscene::op_drawStringAtPos() {
 	debug(DBG_CUT, "Cutscene::op_drawStringAtPos()");
-	uint16_t strId = fetchNextCmdWord();
+	uint16 strId = fetchNextCmdWord();
 	if (strId != 0xFFFF) {
-		int16_t x = (int8_t)fetchNextCmdByte() * 8;
-		int16_t y = (int8_t)fetchNextCmdByte() * 8;
+		int16 x = (int8)fetchNextCmdByte() * 8;
+		int16 y = (int8)fetchNextCmdByte() * 8;
 		if (!_creditsSequence) {
-			const uint8_t *str = _res->getCineString(strId & 0xFFF);
+			const uint8 *str = _res->getCineString(strId & 0xFFF);
 			if (str) {
-				uint8_t color = 0xD0 + (strId >> 0xC);
+				uint8 color = 0xD0 + (strId >> 0xC);
 				drawText(x, y, str, color, _page1, 2);
 			}
 			// workaround for buggy cutscene script
@@ -855,7 +856,7 @@ void Cutscene::op_drawStringAtPos() {
 void Cutscene::op_handleKeys() {
 	debug(DBG_CUT, "Cutscene::op_handleKeys()");
 	while (1) {
-		uint8_t key_mask = fetchNextCmdByte();
+		uint8 key_mask = fetchNextCmdByte();
 		if (key_mask == 0xFF) {
 			return;
 		}
@@ -886,7 +887,7 @@ void Cutscene::op_handleKeys() {
 	_stub->_pi.enter = false;
 	_stub->_pi.space = false;
 	_stub->_pi.shift = false;
-	int16_t n = fetchNextCmdWord();
+	int16 n = fetchNextCmdWord();
 	if (n < 0) {
 		n = -n - 1;
 		if (_varKey == 0) {
@@ -905,17 +906,17 @@ void Cutscene::op_handleKeys() {
 	_cmdPtr = _cmdPtrBak = _res->_cmd + n + _startOffset;
 }
 
-uint8_t Cutscene::fetchNextCmdByte() {
+uint8 Cutscene::fetchNextCmdByte() {
 	return *_cmdPtr++;
 }
 
-uint16_t Cutscene::fetchNextCmdWord() {
-	uint16_t i = READ_BE_UINT16(_cmdPtr);
+uint16 Cutscene::fetchNextCmdWord() {
+	uint16 i = READ_BE_UINT16(_cmdPtr);
 	_cmdPtr += 2;
 	return i;
 }
 
-void Cutscene::mainLoop(uint16_t offset) {
+void Cutscene::mainLoop(uint16 offset) {
 	_frameDelay = 5;
 	_tstamp = _stub->getTimeStamp();
 
@@ -924,9 +925,12 @@ void Cutscene::mainLoop(uint16_t offset) {
 	for (int i = 0; i < 0x20; ++i) {
 		_stub->setPaletteEntry(0xC0 + i, &c);
 	}
+	if (_id != 0x4A && !_creditsSequence) {
+		_ply->play(_musicTable[_id]);
+	}
 	_newPal = false;
 	_hasAlphaColor = false;
-	uint8_t *p = _res->_cmd;
+	uint8 *p = _res->_cmd;
 	if (offset != 0) {
 		offset = READ_BE_UINT16(p + (offset + 1) * 2);
 	}
@@ -937,7 +941,7 @@ void Cutscene::mainLoop(uint16_t offset) {
 	debug(DBG_CUT, "_startOffset = %d offset = %d", _startOffset, offset);
 
 	while (!_stub->_pi.quit && !_interrupted && !_stop) {
-		uint8_t op = fetchNextCmdByte();
+		uint8 op = fetchNextCmdByte();
 		debug(DBG_CUT, "Cutscene::play() opcode = 0x%X (%d)", op, (op >> 2));
 		if (op & 0x80) {
 			break;
@@ -953,9 +957,12 @@ void Cutscene::mainLoop(uint16_t offset) {
 			_interrupted = true;
 		}
 	}
+	if (_interrupted || _id != 0x0D) {
+		_ply->stop();
+	}
 }
 
-void Cutscene::load(uint16_t cutName) {
+void Cutscene::load(uint16 cutName) {
 	assert(cutName != 0xFFFF);
 	const char *name = _namesTable[cutName & 0xFF];
 	switch (_res->_type) {
@@ -996,15 +1003,15 @@ void Cutscene::startCredits() {
 	_textUnk2 = 0;
 	_creditsTextCounter = 0;
 	_interrupted = false;
-	const uint16_t *cut_seq = _creditsCutSeq;
+	const uint16 *cut_seq = _creditsCutSeq;
 	while (!_stub->_pi.quit && !_interrupted) {
-		uint16_t cut_id = *cut_seq++;
+		uint16 cut_id = *cut_seq++;
 		if (cut_id == 0xFFFF) {
 			break;
 		}
 		prepare();
-		uint16_t cutName = _offsetsTable[cut_id * 2 + 0];
-		uint16_t cutOff  = _offsetsTable[cut_id * 2 + 1];
+		uint16 cutName = _offsetsTable[cut_id * 2 + 0];
+		uint16 cutOff  = _offsetsTable[cut_id * 2 + 1];
 		load(cutName);
 		mainLoop(cutOff);
 	}
@@ -1017,11 +1024,14 @@ void Cutscene::play() {
 		debug(DBG_CUT, "Cutscene::play() _id=0x%X", _id);
 		_creditsSequence = false;
 		prepare();
-		uint16_t cutName = _offsetsTable[_id * 2 + 0];
-		uint16_t cutOff  = _offsetsTable[_id * 2 + 1];
+		uint16 cutName = _offsetsTable[_id * 2 + 0];
+		uint16 cutOff  = _offsetsTable[_id * 2 + 1];
 		if (cutName != 0xFFFF) {
 			load(cutName);
 			mainLoop(cutOff);
+			if (_id == 0x3D) {
+				startCredits();
+			}
 		}
 		_vid->fullRefresh();
 		if (_id != 0x3D) {

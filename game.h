@@ -20,10 +20,10 @@
 
 #include "intern.h"
 #include "cutscene.h"
+#include "fs.h"
 #include "menu.h"
 #include "mixer.h"
 #include "mod_player.h"
-#include "ogg_player.h"
 #include "resource.h"
 #include "seq_player.h"
 #include "sfx_player.h"
@@ -35,9 +35,9 @@ struct SystemStub;
 
 struct Game {
 	typedef int (Game::*pge_OpcodeProc)(ObjectOpcodeArgs *args);
-	typedef int (Game::*pge_ZOrderCallback)(LivePGE *, LivePGE *, uint8_t, uint8_t);
-	typedef int (Game::*col_Callback1)(LivePGE *, LivePGE *, int16_t, int16_t);
-	typedef int (Game::*col_Callback2)(LivePGE *, int16_t, int16_t, int16_t);
+	typedef int (Game::*pge_ZOrderCallback)(LivePGE *, LivePGE *, uint8, uint8);
+	typedef int (Game::*col_Callback1)(LivePGE *, LivePGE *, int16, int16);
+	typedef int (Game::*col_Callback2)(LivePGE *, int16, int16, int16);
 
 	enum {
 		CT_UP_ROOM    = 0x00,
@@ -47,57 +47,56 @@ struct Game {
 	};
 
 	static const Level _gameLevels[];
-	static const uint16_t _scoreTable[];
-	static const uint8_t _monsterListLevel1[];
-	static const uint8_t _monsterListLevel2[];
-	static const uint8_t _monsterListLevel3[];
-	static const uint8_t _monsterListLevel4_1[];
-	static const uint8_t _monsterListLevel4_2[];
-	static const uint8_t _monsterListLevel5_1[];
-	static const uint8_t _monsterListLevel5_2[];
-	static const uint8_t *_monsterListLevels[];
-	static const uint8_t _monsterPals[4][32];
+	static const uint16 _scoreTable[];
+	static const uint8 _monsterListLevel1[];
+	static const uint8 _monsterListLevel2[];
+	static const uint8 _monsterListLevel3[];
+	static const uint8 _monsterListLevel4_1[];
+	static const uint8 _monsterListLevel4_2[];
+	static const uint8 _monsterListLevel5_1[];
+	static const uint8 _monsterListLevel5_2[];
+	static const uint8 *_monsterListLevels[];
+	static const uint8 _monsterPals[4][32];
 	static const char *_monsterNames[2][4];
 	static const pge_OpcodeProc _pge_opcodeTable[];
-	static const uint8_t _pge_modKeysTable[];
-	static const uint8_t _protectionCodeData[];
-	static const uint8_t _protectionPal[];
+	static const uint8 _pge_modKeysTable[];
+	static const uint8 _protectionCodeData[];
+	static const uint8 _protectionPal[];
 
 	Cutscene _cut;
 	Menu _menu;
 	Mixer _mix;
-	ModPlayer _mod;
-	OggPlayer _ogg;
+	ModPlayer _modPly;
 	Resource _res;
-	SeqPlayer _seq;
-	SfxPlayer _sfx;
+	SeqPlayer _seqPly;
+	SfxPlayer _sfxPly;
 	Video _vid;
 	SystemStub *_stub;
 	FileSystem *_fs;
 	const char *_savePath;
 
-	const uint8_t *_stringsTable;
+	const uint8 *_stringsTable;
 	const char **_textsTable;
-	uint8_t _currentLevel;
-	uint8_t _skillLevel;
-	uint32_t _score;
-	uint8_t _currentRoom;
-	uint8_t _currentIcon;
+	uint8 _currentLevel;
+	uint8 _skillLevel;
+	uint32 _score;
+	uint8 _currentRoom;
+	uint8 _currentIcon;
 	bool _loadMap;
-	uint8_t _printLevelCodeCounter;
-	uint32_t _randSeed;
-	uint16_t _currentInventoryIconNum;
-	uint16_t _curMonsterFrame;
-	uint16_t _curMonsterNum;
-	uint8_t _blinkingConradCounter;
-	uint16_t _textToDisplay;
+	uint8 _printLevelCodeCounter;
+	uint32 _randSeed;
+	uint16 _currentInventoryIconNum;
+	uint16 _curMonsterFrame;
+	uint16 _curMonsterNum;
+	uint8 _blinkingConradCounter;
+	uint16 _textToDisplay;
 	bool _eraseBackground;
 	AnimBufferState _animBuffer0State[41];
 	AnimBufferState _animBuffer1State[6]; // Conrad
 	AnimBufferState _animBuffer2State[42];
 	AnimBufferState _animBuffer3State[12];
 	AnimBuffers _animBuffers;
-	uint16_t _deathCutsceneCounter;
+	uint16 _deathCutsceneCounter;
 	bool _saveStateCompleted;
 
 	Game(SystemStub *, FileSystem *, const char *savePath, int level, ResourceType ver, Language lang);
@@ -110,7 +109,7 @@ struct Game {
 	bool playCutsceneSeq(const char *name);
 	void loadLevelMap();
 	void loadLevelData();
-	void drawIcon(uint8_t iconNum, int16_t x, int16_t y, uint8_t colMask);
+	void drawIcon(uint8 iconNum, int16 x, int16 y, uint8 colMask);
 	void drawCurrentInventoryItem();
 	void printLevelCode();
 	void showFinalScore();
@@ -121,18 +120,18 @@ struct Game {
 	void drawLevelTexts();
 	void drawStoryTexts();
 	void prepareAnims();
-	void prepareAnimsHelper(LivePGE *pge, int16_t dx, int16_t dy);
+	void prepareAnimsHelper(LivePGE *pge, int16 dx, int16 dy);
 	void drawAnims();
-	void drawAnimBuffer(uint8_t stateNum, AnimBufferState *state);
-	void drawObject(const uint8_t *dataPtr, int16_t x, int16_t y, uint8_t flags);
-	void drawObjectFrame(const uint8_t *bankDataPtr, const uint8_t *dataPtr, int16_t x, int16_t y, uint8_t flags);
-	void decodeCharacterFrame(const uint8_t *dataPtr, uint8_t *dstPtr);
-	void drawCharacter(const uint8_t *dataPtr, int16_t x, int16_t y, uint8_t a, uint8_t b, uint8_t flags);
+	void drawAnimBuffer(uint8 stateNum, AnimBufferState *state);
+	void drawObject(const uint8 *dataPtr, int16 x, int16 y, uint8 flags);
+	void drawObjectFrame(const uint8 *bankDataPtr, const uint8 *dataPtr, int16 x, int16 y, uint8 flags);
+	void decodeCharacterFrame(const uint8 *dataPtr, uint8 *dstPtr);
+	void drawCharacter(const uint8 *dataPtr, int16 x, int16 y, uint8 a, uint8 b, uint8 flags);
 	int loadMonsterSprites(LivePGE *pge);
-	void playSound(uint8_t sfxId, uint8_t softVol);
-	uint16_t getRandomNumber();
+	void playSound(uint8 sfxId, uint8 softVol);
+	uint16 getRandomNumber();
 	void changeLevel();
-	uint16_t getLineLength(const uint8_t *str) const;
+	uint16 getLineLength(const uint8 *str) const;
 	void handleInventory();
 
 
@@ -144,29 +143,29 @@ struct Game {
 	LivePGE *_pge_liveTable2[256]; // active pieges list (index = pge number)
 	LivePGE *_pge_liveTable1[256]; // pieges list by room (index = room)
 	LivePGE _pgeLive[256];
-	uint8_t _pge_currentPiegeRoom;
+	uint8 _pge_currentPiegeRoom;
 	bool _pge_currentPiegeFacingDir; // (false == left)
 	bool _pge_processOBJ;
-	uint8_t _pge_inpKeysMask;
-	uint16_t _pge_opTempVar1;
-	uint16_t _pge_opTempVar2;
-	uint16_t _pge_compareVar1;
-	uint16_t _pge_compareVar2;
+	uint8 _pge_inpKeysMask;
+	uint16 _pge_opTempVar1;
+	uint16 _pge_opTempVar2;
+	uint16 _pge_compareVar1;
+	uint16 _pge_compareVar2;
 
 	void pge_resetGroups();
-	void pge_removeFromGroup(uint8_t idx);
-	int pge_isInGroup(LivePGE *pge_dst, uint16_t group_id, uint16_t counter);
-	void pge_loadForCurrentLevel(uint16_t idx);
+	void pge_removeFromGroup(uint8 idx);
+	int pge_isInGroup(LivePGE *pge_dst, uint16 group_id, uint16 counter);
+	void pge_loadForCurrentLevel(uint16 idx);
 	void pge_process(LivePGE *pge);
 	void pge_setupNextAnimFrame(LivePGE *pge, GroupPGE *le);
-	void pge_playAnimSound(LivePGE *pge, uint16_t arg2);
+	void pge_playAnimSound(LivePGE *pge, uint16 arg2);
 	void pge_setupAnim(LivePGE *pge);
 	int pge_execute(LivePGE *live_pge, InitPGE *init_pge, const Object *obj);
 	void pge_prepare();
 	void pge_setupDefaultAnim(LivePGE *pge);
-	uint16_t pge_processOBJ(LivePGE *pge);
+	uint16 pge_processOBJ(LivePGE *pge);
 	void pge_setupOtherPieges(LivePGE *pge, InitPGE *init_pge);
-	void pge_addToCurrentRoomList(LivePGE *pge, uint8_t room);
+	void pge_addToCurrentRoomList(LivePGE *pge, uint8 room);
 	void pge_getInput();
 	int pge_op_isInpUp(ObjectOpcodeArgs *args);
 	int pge_op_isInpBackward(ObjectOpcodeArgs *args);
@@ -310,61 +309,61 @@ struct Game {
 	void pge_reorderInventory(LivePGE *pge);
 	LivePGE *pge_getInventoryItemBefore(LivePGE *pge, LivePGE *last_pge);
 	void pge_addToInventory(LivePGE *pge1, LivePGE *pge2, LivePGE *pge3);
-	int pge_updateCollisionState(LivePGE *pge, int16_t pge_dy, uint8_t var8);
-	int pge_ZOrder(LivePGE *pge, int16_t num, pge_ZOrderCallback compare, uint16_t unk);
-	void pge_updateGroup(uint8_t idx, uint8_t unk1, int16_t unk2);
+	int pge_updateCollisionState(LivePGE *pge, int16 pge_dy, uint8 var8);
+	int pge_ZOrder(LivePGE *pge, int16 num, pge_ZOrderCallback compare, uint16 unk);
+	void pge_updateGroup(uint8 idx, uint8 unk1, int16 unk2);
 	void pge_removeFromInventory(LivePGE *pge1, LivePGE *pge2, LivePGE *pge3);
-	int pge_ZOrderByAnimY(LivePGE *pge1, LivePGE *pge2, uint8_t comp, uint8_t comp2);
-	int pge_ZOrderByAnimYIfType(LivePGE *pge1, LivePGE *pge2, uint8_t comp, uint8_t comp2);
-	int pge_ZOrderIfIndex(LivePGE *pge1, LivePGE *pge2, uint8_t comp, uint8_t comp2);
-	int pge_ZOrderByIndex(LivePGE *pge1, LivePGE *pge2, uint8_t comp, uint8_t comp2);
-	int pge_ZOrderByObj(LivePGE *pge1, LivePGE *pge2, uint8_t comp, uint8_t comp2);
-	int pge_ZOrderIfDifferentDirection(LivePGE *pge1, LivePGE *pge2, uint8_t comp, uint8_t comp2);
-	int pge_ZOrderIfSameDirection(LivePGE *pge1, LivePGE *pge2, uint8_t comp, uint8_t comp2);
-	int pge_ZOrderIfTypeAndSameDirection(LivePGE *pge1, LivePGE *pge2, uint8_t comp, uint8_t comp2);
-	int pge_ZOrderIfTypeAndDifferentDirection(LivePGE *pge1, LivePGE *pge2, uint8_t comp, uint8_t comp2);
-	int pge_ZOrderByNumber(LivePGE *pge1, LivePGE *pge2, uint8_t comp, uint8_t comp2);
+	int pge_ZOrderByAnimY(LivePGE *pge1, LivePGE *pge2, uint8 comp, uint8 comp2);
+	int pge_ZOrderByAnimYIfType(LivePGE *pge1, LivePGE *pge2, uint8 comp, uint8 comp2);
+	int pge_ZOrderIfIndex(LivePGE *pge1, LivePGE *pge2, uint8 comp, uint8 comp2);
+	int pge_ZOrderByIndex(LivePGE *pge1, LivePGE *pge2, uint8 comp, uint8 comp2);
+	int pge_ZOrderByObj(LivePGE *pge1, LivePGE *pge2, uint8 comp, uint8 comp2);
+	int pge_ZOrderIfDifferentDirection(LivePGE *pge1, LivePGE *pge2, uint8 comp, uint8 comp2);
+	int pge_ZOrderIfSameDirection(LivePGE *pge1, LivePGE *pge2, uint8 comp, uint8 comp2);
+	int pge_ZOrderIfTypeAndSameDirection(LivePGE *pge1, LivePGE *pge2, uint8 comp, uint8 comp2);
+	int pge_ZOrderIfTypeAndDifferentDirection(LivePGE *pge1, LivePGE *pge2, uint8 comp, uint8 comp2);
+	int pge_ZOrderByNumber(LivePGE *pge1, LivePGE *pge2, uint8 comp, uint8 comp2);
 
 
 	// collision
 	CollisionSlot _col_slots[256];
-	uint8_t _col_curPos;
+	uint8 _col_curPos;
 	CollisionSlot *_col_slotsTable[256];
 	CollisionSlot *_col_curSlot;
 	CollisionSlot2 _col_slots2[256];
 	CollisionSlot2 *_col_slots2Cur;
 	CollisionSlot2 *_col_slots2Next;
-	uint8_t _col_activeCollisionSlots[0x30 * 3]; // left, current, right
-	uint8_t _col_currentLeftRoom;
-	uint8_t _col_currentRightRoom;
-	int16_t _col_currentPiegeGridPosX;
-	int16_t _col_currentPiegeGridPosY;
+	uint8 _col_activeCollisionSlots[0x30 * 3]; // left, current, right
+	uint8 _col_currentLeftRoom;
+	uint8 _col_currentRightRoom;
+	int16 _col_currentPiegeGridPosX;
+	int16 _col_currentPiegeGridPosY;
 
 	void col_prepareRoomState();
 	void col_clearState();
-	LivePGE *col_findPiege(LivePGE *pge, uint16_t arg2);
-	int16_t col_findSlot(int16_t pos);
+	LivePGE *col_findPiege(LivePGE *pge, uint16 arg2);
+	int16 col_findSlot(int16 pos);
 	void col_preparePiegeState(LivePGE *dst_pge);
-	uint16_t col_getGridPos(LivePGE *pge, int16_t dx);
-	int16_t col_getGridData(LivePGE *pge, int16_t dy, int16_t dx);
-	uint8_t col_findCurrentCollidingObject(LivePGE *pge, uint8_t n1, uint8_t n2, uint8_t n3, LivePGE **pge_out);
-	int16_t col_detectHit(LivePGE *pge, int16_t arg2, int16_t arg4, col_Callback1 callback1, col_Callback2 callback2, int16_t argA, int16_t argC);
-	int col_detectHitCallback2(LivePGE *pge1, LivePGE *pge2, int16_t unk1, int16_t unk2);
-	int col_detectHitCallback3(LivePGE *pge1, LivePGE *pge2, int16_t unk1, int16_t unk2);
-	int col_detectHitCallback4(LivePGE *pge1, LivePGE *pge2, int16_t unk1, int16_t unk2);
-	int col_detectHitCallback5(LivePGE *pge1, LivePGE *pge2, int16_t unk1, int16_t unk2);
-	int col_detectHitCallback1(LivePGE *pge, int16_t dy, int16_t unk1, int16_t unk2);
-	int col_detectHitCallback6(LivePGE *pge, int16_t dy, int16_t unk1, int16_t unk2);
-	int col_detectHitCallbackHelper(LivePGE *pge, int16_t unk1);
-	int col_detectGunHitCallback1(LivePGE *pge, int16_t arg2, int16_t arg4, int16_t arg6);
-	int col_detectGunHitCallback2(LivePGE *pge1, LivePGE *pge2, int16_t arg4, int16_t);
-	int col_detectGunHitCallback3(LivePGE *pge1, LivePGE *pge2, int16_t arg4, int16_t);
-	int col_detectGunHit(LivePGE *pge, int16_t arg2, int16_t arg4, col_Callback1 callback1, col_Callback2 callback2, int16_t argA, int16_t argC);
+	uint16 col_getGridPos(LivePGE *pge, int16 dx);
+	int16 col_getGridData(LivePGE *pge, int16 dy, int16 dx);
+	uint8 col_findCurrentCollidingObject(LivePGE *pge, uint8 n1, uint8 n2, uint8 n3, LivePGE **pge_out);
+	int16 col_detectHit(LivePGE *pge, int16 arg2, int16 arg4, col_Callback1 callback1, col_Callback2 callback2, int16 argA, int16 argC);
+	int col_detectHitCallback2(LivePGE *pge1, LivePGE *pge2, int16 unk1, int16 unk2);
+	int col_detectHitCallback3(LivePGE *pge1, LivePGE *pge2, int16 unk1, int16 unk2);
+	int col_detectHitCallback4(LivePGE *pge1, LivePGE *pge2, int16 unk1, int16 unk2);
+	int col_detectHitCallback5(LivePGE *pge1, LivePGE *pge2, int16 unk1, int16 unk2);
+	int col_detectHitCallback1(LivePGE *pge, int16 dy, int16 unk1, int16 unk2);
+	int col_detectHitCallback6(LivePGE *pge, int16 dy, int16 unk1, int16 unk2);
+	int col_detectHitCallbackHelper(LivePGE *pge, int16 unk1);
+	int col_detectGunHitCallback1(LivePGE *pge, int16 arg2, int16 arg4, int16 arg6);
+	int col_detectGunHitCallback2(LivePGE *pge1, LivePGE *pge2, int16 arg4, int16);
+	int col_detectGunHitCallback3(LivePGE *pge1, LivePGE *pge2, int16 arg4, int16);
+	int col_detectGunHit(LivePGE *pge, int16 arg2, int16 arg4, col_Callback1 callback1, col_Callback2 callback2, int16 argA, int16 argC);
 
 
 	// input
-	uint8_t _inp_lastKeysHit;
-	uint8_t _inp_lastKeysHitLeftRight;
+	uint8 _inp_lastKeysHit;
+	uint8 _inp_lastKeysHitLeftRight;
 	bool _inp_replay;
 	bool _inp_record;
 	File *_inp_demo;
@@ -374,13 +373,13 @@ struct Game {
 
 
 	// save/load state
-	uint8_t _stateSlot;
+	uint8 _stateSlot;
 	bool _validSaveState;
 
 	void makeGameDemoName(char *buf);
-	void makeGameStateName(uint8_t slot, char *buf);
-	bool saveGameState(uint8_t slot);
-	bool loadGameState(uint8_t slot);
+	void makeGameStateName(uint8 slot, char *buf);
+	bool saveGameState(uint8 slot);
+	bool loadGameState(uint8 slot);
 	void saveState(File *f);
 	void loadState(File *f);
 };

@@ -33,58 +33,58 @@ struct Video {
 		CHAR_H = 8
 	};
 
-	static const uint8_t _conradPal1[];
-	static const uint8_t _conradPal2[];
-	static const uint8_t _textPal[];
-	static const uint8_t _palSlot0xF[];
+	static const uint8 _conradPal1[];
+	static const uint8 _conradPal2[];
+	static const uint8 _textPal[];
+	static const uint8 _palSlot0xF[];
 
 	Resource *_res;
 	SystemStub *_stub;
 
-	uint8_t *_frontLayer;
-	uint8_t *_backLayer;
-	uint8_t *_tempLayer;
-	uint8_t *_tempLayer2;
-	uint8_t _unkPalSlot1, _unkPalSlot2;
-	uint8_t _mapPalSlot1, _mapPalSlot2, _mapPalSlot3, _mapPalSlot4;
-	uint8_t _charFrontColor;
-	uint8_t _charTransparentColor;
-	uint8_t _charShadowColor;
-	uint8_t *_screenBlocks;
+	uint8 *_frontLayer;
+	uint8 *_backLayer;
+	uint8 *_tempLayer;
+	uint8 *_tempLayer2;
+	uint8 _unkPalSlot1, _unkPalSlot2;
+	uint8 _mapPalSlot1, _mapPalSlot2, _mapPalSlot3, _mapPalSlot4;
+	uint8 _charFrontColor;
+	uint8 _charTransparentColor;
+	uint8 _charShadowColor;
+	uint8 *_screenBlocks;
 	bool _fullRefresh;
-	uint8_t _shakeOffset;
+	uint8 _shakeOffset;
 
 	Video(Resource *res, SystemStub *stub);
 	~Video();
 
-	void markBlockAsDirty(int16_t x, int16_t y, uint16_t w, uint16_t h);
+	void markBlockAsDirty(int16 x, int16 y, uint16 w, uint16 h);
 	void updateScreen();
 	void fullRefresh();
 	void fadeOut();
 	void fadeOutPalette();
 	void setPaletteColorBE(int num, int offset);
 	void setPaletteSlotBE(int palSlot, int palNum);
-	void setPaletteSlotLE(int palSlot, const uint8_t *palData);
+	void setPaletteSlotLE(int palSlot, const uint8 *palData);
 	void setTextPalette();
 	void setPalette0xF();
 	void PC_decodeMap(int level, int room);
 	void PC_setLevelPalettes();
-	void PC_decodeIcn(const uint8_t *src, int num, uint8_t *dst);
-	void PC_decodeSpc(const uint8_t *src, int w, int h, uint8_t *dst);
+	void PC_decodeIcn(const uint8 *src, int num, uint8 *dst);
+	void PC_decodeSpc(const uint8 *src, int w, int h, uint8 *dst);
 	void AMIGA_decodeLev(int level, int room);
-	void AMIGA_decodeSpm(const uint8_t *src, uint8_t *dst);
-	void AMIGA_decodeIcn(const uint8_t *src, int num, uint8_t *dst);
-	void AMIGA_decodeSpc(const uint8_t *src, int w, int h, uint8_t *dst);
-	void drawSpriteSub1(const uint8_t *src, uint8_t *dst, int pitch, int h, int w, uint8_t colMask);
-	void drawSpriteSub2(const uint8_t *src, uint8_t *dst, int pitch, int h, int w, uint8_t colMask);
-	void drawSpriteSub3(const uint8_t *src, uint8_t *dst, int pitch, int h, int w, uint8_t colMask);
-	void drawSpriteSub4(const uint8_t *src, uint8_t *dst, int pitch, int h, int w, uint8_t colMask);
-	void drawSpriteSub5(const uint8_t *src, uint8_t *dst, int pitch, int h, int w, uint8_t colMask);
-	void drawSpriteSub6(const uint8_t *src, uint8_t *dst, int pitch, int h, int w, uint8_t colMask);
-	void PC_drawChar(uint8_t c, int16_t y, int16_t x);
-	void PC_drawStringChar(uint8_t *dst, int pitch, const uint8_t *src, uint8_t color, uint8_t chr);
-	void AMIGA_drawStringChar(uint8_t *dst, int pitch, const uint8_t *src, uint8_t color, uint8_t chr);
-	const char *drawString(const char *str, int16_t x, int16_t y, uint8_t col);
+	void AMIGA_decodeSpm(const uint8 *src, uint8 *dst);
+	void AMIGA_decodeIcn(const uint8 *src, int num, uint8 *dst);
+	void AMIGA_decodeSpc(const uint8 *src, int w, int h, uint8 *dst);
+	void drawSpriteSub1(const uint8 *src, uint8 *dst, int pitch, int h, int w, uint8 colMask);
+	void drawSpriteSub2(const uint8 *src, uint8 *dst, int pitch, int h, int w, uint8 colMask);
+	void drawSpriteSub3(const uint8 *src, uint8 *dst, int pitch, int h, int w, uint8 colMask);
+	void drawSpriteSub4(const uint8 *src, uint8 *dst, int pitch, int h, int w, uint8 colMask);
+	void drawSpriteSub5(const uint8 *src, uint8 *dst, int pitch, int h, int w, uint8 colMask);
+	void drawSpriteSub6(const uint8 *src, uint8 *dst, int pitch, int h, int w, uint8 colMask);
+	void PC_drawChar(uint8 c, int16 y, int16 x);
+	void PC_drawStringChar(uint8 *dst, int pitch, const uint8 *src, uint8 color, uint8 chr);
+	void AMIGA_drawStringChar(uint8 *dst, int pitch, const uint8 *src, uint8 color, uint8 chr);
+	const char *drawString(const char *str, int16 x, int16 y, uint8 col);
 };
 
 #endif // VIDEO_H__

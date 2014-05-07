@@ -24,82 +24,53 @@
 #endif
 #include "fs.h"
 
-struct FileName {
-	char *name;
-	int dir;
-};
 
 struct FileSystem_impl {
-
-	char **_dirsList;
-	int _dirsCount;
-	FileName *_filesList;
-	int _filesCount;
-
 	FileSystem_impl() :
-		_dirsList(0), _dirsCount(0), _filesList(0), _filesCount(0) {
+		_fileList(0), _fileCount(0), _filePathLen(0) {
 	}
 
 	~FileSystem_impl() {
-		for (int i = 0; i < _dirsCount; ++i) {
-			free(_dirsList[i]);
+		for (int i = 0; i < _fileCount; ++i) {
+			free(_fileList[i]);
 		}
-		free(_dirsList);
-		for (int i = 0; i < _filesCount; ++i) {
-			free(_filesList[i].name);
-		}
-		free(_filesList);
+		free(_fileList);
 	}
 
 	void setRootDirectory(const char *dir) {
-		getPathListFromDirectory(dir);
-		debug(DBG_FILE, "Found %d files and %d directories", _filesCount, _dirsCount);
+		_filePathLen = strlen(dir) + 1;
+		buildFileListFromDirectory(dir);
 	}
 
-	char *findPath(const char *name) {
-		for (int i = 0; i < _filesCount; ++i) {
-			if (strcasecmp(_filesList[i].name, name) == 0) {
-				const char *dir = _dirsList[_filesList[i].dir];
-				const int len = strlen(dir) + 1 + strlen(_filesList[i].name) + 1;
-				char *p = (char *)malloc(len);
-				if (p) {
-					snprintf(p, len, "%s/%s", dir, _filesList[i].name);
-				}
-				return p;
+	const char *findFilePath(const char *file) {
+		const int len = strlen(file);
+		for (int i = 0; i < _fileCount; ++i) {
+			const char *filePath = _fileList[i];
+			const int filePathLen = strlen(filePath);
+			if (filePathLen > len && strcasecmp(filePath + filePathLen - len, file) == 0) {
+				return filePath;
 			}
 		}
 		return 0;
 	}
 
-	void addPath(const char *dir, const char *name) {
-		int index = -1;
-		for (int i = 0; i < _dirsCount; ++i) {
-			if (strcmp(_dirsList[i], dir) == 0) {
-				index = i;
-				break;
-			}
-		}
-		if (index == -1) {
-			_dirsList = (char **)realloc(_dirsList, (_dirsCount + 1) * sizeof(char *));
-			if (_dirsList) {
-				_dirsList[_dirsCount] = strdup(dir);
-				index = _dirsCount;
-				++_dirsCount;
-			}
-		}
-		_filesList = (FileName *)realloc(_filesList, (_filesCount + 1) * sizeof(FileName));
-		if (_filesList) {
-			_filesList[_filesCount].name = strdup(name);
-			_filesList[_filesCount].dir = index;
-			++_filesCount;
+	void addFileToList(const char *filePath) {
+		_fileList = (char **)realloc(_fileList, (_fileCount + 1) * sizeof(char *));
+		if (_fileList) {
+			_fileList[_fileCount] = strdup(filePath);
+			++_fileCount;
 		}
 	}
 
-	void getPathListFromDirectory(const char *dir);
+	void buildFileListFromDirectory(const char *dir);
+
+	char **_fileList;
+	int _fileCount;
+	int _filePathLen;
 };
 
 #ifdef _WIN32
-void FileSystem_impl::getPathListFromDirectory(const char *dir) {
+void FileSystem_impl::buildFileListFromDirectory(const char *dir) {
 	WIN32_FIND_DATA findData;
 	char searchPath[MAX_PATH];
 	snprintf(searchPath, sizeof(searchPath), "%s/*", dir);
@@ -112,16 +83,16 @@ void FileSystem_impl::getPathListFromDirectory(const char *dir) {
 			char filePath[MAX_PATH];
 			snprintf(filePath, sizeof(filePath), "%s/%s", dir, findData.cFileName);
 			if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-				getPathListFromDirectory(filePath);
+				buildFileListFromDirectory(filePath);
 			} else {
-				addPath(dir, findData.cFileName);
+				addFileToList(filePath);
 			}
 		} while (FindNextFile(h, &findData));
 		FindClose(h);
 	}
 }
 #else
-void FileSystem_impl::getPathListFromDirectory(const char *dir) {
+void FileSystem_impl::buildFileListFromDirectory(const char *dir) {
 	DIR *d = opendir(dir);
 	if (d) {
 		dirent *de;
@@ -134,9 +105,9 @@ void FileSystem_impl::getPathListFromDirectory(const char *dir) {
 			struct stat st;
 			if (stat(filePath, &st) == 0) {
 				if (S_ISDIR(st.st_mode)) {
-					getPathListFromDirectory(filePath);
+					buildFileListFromDirectory(filePath);
 				} else {
-					addPath(dir, de->d_name);
+					addFileToList(filePath);
 				}
 			}
 		}
@@ -154,7 +125,7 @@ FileSystem::~FileSystem() {
 	delete _impl;
 }
 
-char *FileSystem::findPath(const char *filename) {
-	return _impl->findPath(filename);
+const char *FileSystem::findPath(const char *filename) {
+	return _impl->findFilePath(filename);
 }
 

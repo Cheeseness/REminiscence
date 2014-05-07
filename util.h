@@ -36,9 +36,9 @@ enum {
 	DBG_FILE   = 1 << 12
 };
 
-extern uint16_t g_debugMask;
+extern uint16 g_debugMask;
 
-extern void debug(uint16_t cm, const char *msg, ...);
+extern void debug(uint16 cm, const char *msg, ...);
 extern void error(const char *msg, ...);
 extern void warning(const char *msg, ...);
 

@@ -68,7 +68,6 @@ static Language detectLanguage(FileSystem *fs) {
 		{ "FR_CINE.TXT", LANG_FR },
 		{ "GERCINE.TXT", LANG_DE },
 		{ "SPACINE.TXT", LANG_SP },
-		{ "ITACINE.TXT", LANG_IT },
 		// Amiga
 		{ "FRCINE.TXT", LANG_FR },
 		{ 0, LANG_EN }
