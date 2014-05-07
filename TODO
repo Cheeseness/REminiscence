@@ -1,0 +1,16 @@
+reminiscence/
+	0.2.2
+		libmikmod
+		amiga support
+			fix spc drawing w=24
+			title screen
+		android support
+			thread for mainLoop
+		cutscene 22/24
+			http://www.youtube.com/watch?v=-IjeC3seKYI
+
+proto/
+	test datafile present on start, message box to warn
+	resume/suspend fix
+	sound
+	controls fix
